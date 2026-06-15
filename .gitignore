@@ -8,7 +8,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
-
+secrets/*.env
 # Variaveis de ambiente e configuracoes locais
 .env
 .env.*

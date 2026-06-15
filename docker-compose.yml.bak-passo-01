@@ -23,13 +23,9 @@ services:
       retries: 10
 
   moodle:
-    image: w3soft/moodle:2026.06.1-local
-    build:
-      context: ./moodle
+    build: ./moodle
     container_name: moodle_app
     restart: unless-stopped
-    env_file:
-      - ./secrets/local.env
     ports:
       - "8080:80"
     depends_on:
@@ -41,11 +37,9 @@ services:
       - moodle_net
 
   cron:
-    image: w3soft/moodle:2026.06.1-local
+    build: ./moodle
     container_name: moodle_cron
     restart: unless-stopped
-    env_file:
-      - ./secrets/local.env
     depends_on:
       db:
         condition: service_healthy

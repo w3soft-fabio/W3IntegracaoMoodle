@@ -1,0 +1,82 @@
+<?php
+
+// Remove qualquer valor anterior da variável $CFG, caso ela já tenha sido criada.
+// Em C#, pense nisso como garantir que uma referência antiga não será reutilizada por acidente.
+unset($CFG);
+
+// Declara que esta função/arquivo quer usar a variável global $CFG.
+// No PHP, variáveis globais não entram automaticamente no escopo local como em alguns contextos de C#.
+global $CFG;
+
+// Cria um objeto vazio do tipo stdClass, que é a classe genérica padrão do PHP.
+// A partir daqui, propriedades serão adicionadas dinamicamente com a sintaxe $CFG->nome.
+$CFG = new stdClass();
+
+// Define o tipo do banco de dados usado pelo Moodle.
+// Aqui o Moodle vai usar MariaDB, que é compatível com MySQL em muitos cenários.
+$CFG->dbtype    = 'mariadb';
+
+// Define qual biblioteca de acesso ao banco será usada.
+// "native" significa usar o driver nativo suportado pelo PHP/Moodle para esse banco.
+$CFG->dblibrary = 'native';
+
+// Define o host do banco de dados.
+// Em Docker Compose, "db" normalmente é o nome do serviço do container do banco.
+$CFG->dbhost    = 'db';
+
+// Define o nome do banco de dados que o Moodle vai acessar.
+$CFG->dbname    = 'moodle';
+
+// Define o usuário usado para autenticar no banco de dados.
+$CFG->dbuser    = 'moodle';
+
+// Define a senha do usuário do banco.
+// Em projetos reais, normalmente isso vem de variável de ambiente ou secret, não hardcoded.
+$CFG->dbpass    = 'moodlepass';
+
+// Define o prefixo das tabelas do Moodle.
+// Por exemplo, uma tabela chamada "user" pode virar "mdl_user" no banco.
+$CFG->prefix    = 'mdl_';
+
+// Define opções extras de conexão com o banco.
+// Em PHP, [] cria um array; aqui ele é associativo, parecido com Dictionary<string, object> em C#.
+$CFG->dboptions = [
+    // Controla conexão persistente com o banco.
+    // 0 significa falso/desligado; 1 significaria verdadeiro/ligado.
+    'dbpersist' => 0,
+
+    // Porta do banco de dados.
+    // String vazia faz o Moodle usar a porta padrão do MariaDB/MySQL, geralmente 3306.
+    'dbport' => '',
+
+    // Caminho para socket Unix, usado em algumas instalações locais de banco.
+    // Em Docker, normalmente fica vazio porque a conexão é feita pela rede entre containers.
+    'dbsocket' => '',
+
+    // Collation usada nas tabelas/textos do banco.
+    // utf8mb4 suporta Unicode completo, incluindo emojis; unicode_ci faz comparação case-insensitive.
+    'dbcollation' => 'utf8mb4_unicode_ci',
+];
+
+// URL pública pela qual o Moodle será acessado no navegador.
+// Aqui ele espera rodar localmente na porta 8080.
+$CFG->wwwroot   = 'http://localhost:8080';
+
+// Diretório onde o Moodle guarda arquivos enviados, cache e dados internos.
+// Esse diretório deve existir e ser gravável pelo usuário do servidor web/container.
+$CFG->dataroot  = '/var/www/moodledata';
+
+// Nome do diretório administrativo do Moodle.
+// Por padrão é "admin", então a área administrativa fica abaixo de /admin.
+$CFG->admin     = 'admin';
+
+// Permissões usadas quando o Moodle cria diretórios.
+// 0777 é um número octal em PHP: leitura, escrita e execução para dono, grupo e outros.
+// Em produção, costuma ser melhor usar permissões mais restritivas.
+$CFG->directorypermissions = 0777;
+
+// Carrega o arquivo principal de inicialização do Moodle.
+// __DIR__ é uma constante mágica do PHP com o diretório deste arquivo config.php.
+// O operador . concatena strings em PHP, semelhante ao + com strings em C#.
+// require_once inclui o arquivo uma única vez e gera erro fatal se ele não existir.
+require_once(__DIR__ . '/lib/setup.php');

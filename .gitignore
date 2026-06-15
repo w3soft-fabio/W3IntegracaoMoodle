@@ -1,0 +1,52 @@
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editores e IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Variaveis de ambiente e configuracoes locais
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Moodle
+moodle/config.php
+/moodledata/
+/data/
+/cache/
+/localcache/
+/sessions/
+/temp/
+/trashdir/
+
+# Docker e banco de dados locais
+db_data/
+mysql/
+mariadb/
+postgres/
+*.sql
+*.sql.gz
+*.dump
+
+# Logs e relatorios
+*.log
+logs/
+coverage/
+.phpunit.result.cache
+
+# Dependencias e builds
+node_modules/
+vendor/
+composer.phar
+/dist/
+/build/
+/tmp/
+*.tgz
+*.zip
+*.tar.gz

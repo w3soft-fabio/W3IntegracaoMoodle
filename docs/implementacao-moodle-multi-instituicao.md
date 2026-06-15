@@ -12,9 +12,19 @@ A recomendacao final e:
 - 1 servico de monitoramento;
 - 1 mecanismo central de backup;
 - 1 imagem Docker Moodle padronizada;
-- para cada instituicao, 1 container Moodle, 1 banco logico, 1 usuario de banco, 1 volume `moodledata`, 1 arquivo de secrets e 1 subdominio.
+- para cada instituicao, 1 container Moodle, 1 banco logico, 1 usuario de banco, 1 volume `moodledata`, 1 arquivo de secrets, 1 slug publico e 1 ID interno imutavel.
 
 Esse modelo evita multilocacao dentro de uma unica instalacao Moodle e tambem evita duplicar MariaDB, Redis, proxy e workers auxiliares para cada cliente pequeno.
+
+Para reduzir custo com hospedagem e evitar cobranca por subdominio, a URL publica das instituicoes deve usar um unico dominio com um identificador legivel no caminho. O formato recomendado e:
+
+```text
+https://seudominio.com/i/escola-a
+https://seudominio.com/i/escola-b
+https://seudominio.com/i/escola-c
+```
+
+O `slug` publico, como `escola-a`, deve ser amigavel para suporte e comunicacao. Internamente, cada instituicao tambem deve manter um ID ou hash imutavel, usado em registros, automacoes, auditoria e integracoes. Assim, a URL pode continuar humana sem depender dela como chave tecnica definitiva.
 
 ## Estado atual do projeto
 
@@ -35,9 +45,9 @@ Internet
    |
 Proxy reverso compartilhado
    |
-   +-- escola-a.dominio.com -> moodle_escola_a
-   +-- escola-b.dominio.com -> moodle_escola_b
-   +-- escola-c.dominio.com -> moodle_escola_c
+   +-- seudominio.com/i/escola-a -> moodle_escola_a
+   +-- seudominio.com/i/escola-b -> moodle_escola_b
+   +-- seudominio.com/i/escola-c -> moodle_escola_c
 
 moodle_escola_a \
 moodle_escola_b  +--> Banco compartilhado: moodle_escola_a, moodle_escola_b, moodle_escola_c
@@ -51,7 +61,9 @@ moodle_escola_c /
 Cada instituicao deve ter:
 
 - container Moodle proprio;
-- subdominio proprio;
+- slug publico proprio, por exemplo `escola-a`;
+- ID ou hash interno imutavel;
+- URL publica propria dentro do dominio unico, por exemplo `https://seudominio.com/i/escola-a`;
 - banco logico proprio;
 - usuario de banco proprio;
 - senha propria;
@@ -132,6 +144,8 @@ MOODLE_DATAROOT
 MOODLE_REDIS_HOST
 MOODLE_REDIS_PORT
 MOODLE_REDIS_PREFIX
+MOODLE_PUBLIC_SLUG
+MOODLE_TENANT_ID
 ```
 
 Exemplo conceitual para o `config.php`:
@@ -148,9 +162,16 @@ $CFG->prefix    = 'mdl_';
 $CFG->wwwroot   = getenv('MOODLE_URL');
 $CFG->dataroot  = getenv('MOODLE_DATAROOT') ?: '/var/www/moodledata';
 $CFG->admin     = 'admin';
+
+if (getenv('MOODLE_PUBLIC_SLUG')) {
+    $sessionSlug = preg_replace('/[^a-zA-Z0-9_]/', '_', getenv('MOODLE_PUBLIC_SLUG'));
+    $CFG->sessioncookie = 'MoodleSession_' . $sessionSlug;
+}
 ```
 
 Importante: o mesmo arquivo `config.php` pode existir na imagem de todas as instituicoes, desde que os valores variem por ambiente.
+
+Quando a instituicao estiver atras de um caminho como `/i/escola-a`, o `MOODLE_URL` deve incluir esse caminho completo. Exemplo: `https://seudominio.com/i/escola-a`. Isso faz o Moodle gerar links, redirecionamentos e URLs de assets ja dentro da rota correta.
 
 ## Passo 3: Separar a infraestrutura compartilhada
 
@@ -283,7 +304,9 @@ networks:
 Exemplo de `secrets/escola-a.env`:
 
 ```env
-MOODLE_URL=https://escola-a.dominio.com
+MOODLE_URL=https://seudominio.com/i/escola-a
+MOODLE_PUBLIC_SLUG=escola-a
+MOODLE_TENANT_ID=8f3b2a510b484f6f8b0d9c7a1e2d4f90
 MOODLE_DB_HOST=db
 MOODLE_DB_NAME=moodle_escola_a
 MOODLE_DB_USER=moodle_escola_a
@@ -330,19 +353,41 @@ Validar os parametros exatos conforme a versao do Moodle e o plugin de cache Red
 
 ## Passo 7: Configurar o proxy reverso
 
-Cada subdominio deve apontar para o container Moodle da respectiva instituicao.
+O dominio publico deve apontar para o proxy compartilhado. Dentro dele, cada caminho `/i/{slug}` deve ser roteado para o container Moodle da respectiva instituicao.
+
+Usar um prefixo fixo como `/i/` e preferivel a usar diretamente `/{slug}`, porque reduz conflito com rotas internas do Moodle, como `/login`, `/theme`, `/pluginfile.php` e `/admin`.
 
 Exemplo conceitual com Caddy:
 
 ```caddyfile
-escola-a.dominio.com {
-    reverse_proxy moodle_escola_a:80
-}
+seudominio.com {
+    redir /i/escola-a /i/escola-a/
+    redir /i/escola-b /i/escola-b/
 
-escola-b.dominio.com {
-    reverse_proxy moodle_escola_b:80
+    handle_path /i/escola-a/* {
+        reverse_proxy moodle_escola_a:80
+    }
+
+    handle_path /i/escola-b/* {
+        reverse_proxy moodle_escola_b:80
+    }
 }
 ```
+
+Nesse modelo, o proxy recebe `https://seudominio.com/i/escola-a/login/index.php`, remove o prefixo `/i/escola-a` antes de encaminhar ao container e o Moodle continua com `$CFG->wwwroot = 'https://seudominio.com/i/escola-a'`.
+
+Pontos de validacao obrigatorios:
+
+- login e logout;
+- redirecionamentos apos login;
+- carregamento de CSS, JS, imagens e temas;
+- links para arquivos via `pluginfile.php`;
+- chamadas Ajax;
+- cron;
+- URLs enviadas por e-mail;
+- cookies e sessoes.
+
+Como todas as instituicoes usam o mesmo host, cada Moodle deve ter identificadores de sessao/cookie exclusivos, por exemplo derivados do `MOODLE_PUBLIC_SLUG` ou do `MOODLE_TENANT_ID`. Isso evita colisao de sessoes entre instituicoes acessadas no mesmo navegador.
 
 Se a imagem for migrada para PHP-FPM puro, o proxy precisara de uma camada HTTP que converse com FPM, normalmente Nginx + FastCGI, ou uma imagem Moodle que ja inclua o servidor web adequado. Nesse caso, o proxy publico continua compartilhado e os containers Moodle continuam isolados por instituicao.
 
@@ -444,7 +489,8 @@ O backup de cada instituicao deve incluir:
 - volume `moodledata` da instituicao;
 - arquivo de secrets;
 - versao da imagem Moodle em uso;
-- configuracao do proxy para o subdominio.
+- configuracao do proxy para a rota `/i/{slug}`;
+- registro do slug publico e do ID interno imutavel.
 
 Evitar backup completo de containers. O container deve ser descartavel; o que precisa ser preservado sao dados, secrets e versao da imagem.
 
@@ -483,20 +529,20 @@ Monitorar na infraestrutura compartilhada:
 
 Checklist operacional:
 
-1. Definir slug da instituicao, por exemplo `escola_a`.
-2. Criar DNS do subdominio, por exemplo `escola-a.dominio.com`.
+1. Definir slug publico da instituicao, por exemplo `escola-a`.
+2. Gerar ID ou hash interno imutavel para a instituicao.
 3. Criar banco `moodle_escola_a`.
 4. Criar usuario `moodle_escola_a`.
 5. Conceder permissoes apenas no banco da instituicao.
 6. Criar arquivo de secrets `secrets/escola-a.env`.
 7. Criar volume `moodledata_escola_a`.
 8. Adicionar servico `moodle_escola_a` ao Compose de instituicoes.
-9. Adicionar rota no proxy reverso.
+9. Adicionar rota `https://seudominio.com/i/escola-a` no proxy reverso.
 10. Subir o container.
 11. Executar instalacao inicial do Moodle.
 12. Adicionar a instituicao ao agendamento central de cron.
 13. Incluir banco e `moodledata` na rotina de backup.
-14. Incluir container e subdominio no monitoramento.
+14. Incluir container e rota publica no monitoramento.
 
 ## Passo 14: Estrategia de atualizacao
 
@@ -556,9 +602,10 @@ Evitar no inicio:
 
 Ao final da implementacao, o projeto deve permitir operar varias instituicoes com bom isolamento logico e operacional:
 
-- cada instituicao tem seu proprio Moodle, banco, `moodledata`, secrets e dominio;
+- cada instituicao tem seu proprio Moodle, banco, `moodledata`, secrets, slug publico e ID interno;
+- cada instituicao e acessada por uma URL humana no dominio unico, usando `/i/{slug}`;
+- cada instituicao mantem um ID interno imutavel para automacoes e auditoria;
 - a infraestrutura pesada e compartilhada;
 - a imagem Moodle e padronizada;
 - o custo cresce principalmente com uso real de PHP, armazenamento e banco, nao com a duplicacao completa da stack;
 - clientes grandes podem ser promovidos para infraestrutura dedicada sem mudar o modelo geral.
-

@@ -962,7 +962,9 @@ O que muda por instituicao nao deve ser o codigo da imagem. O que muda por insti
 - banco de dados;
 - usuario e senha;
 - volume `moodledata`;
-- subdominio;
+- URL publica no dominio unico, por exemplo `https://seudominio.com/i/escola-a`;
+- slug publico legivel, por exemplo `escola-a`;
+- ID ou hash interno imutavel da instituicao;
 - prefixo Redis;
 - limites de CPU e memoria.
 
@@ -996,4 +998,3 @@ Transformar moodle/config.php em configuracao por variaveis de ambiente.
 ```
 
 Esse sera o passo que realmente prepara o mesmo container para funcionar como `escola_a`, `escola_b`, `escola_c` etc., mudando apenas as configuracoes externas.
-

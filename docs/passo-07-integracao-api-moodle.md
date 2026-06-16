@@ -456,6 +456,33 @@ examples/moodle-api-client/
     sync-students.js
 ```
 
+## Alternativa em C#/.NET
+
+Este repositorio tambem possui uma implementacao equivalente em C#:
+
+```text
+examples/moodle-api-client-csharp/
+```
+
+Ela usa as mesmas variaveis de ambiente, o mesmo arquivo `students.mock.json` e as mesmas funcoes REST do Moodle.
+
+Prepare o exemplo:
+
+```sh
+cd examples/moodle-api-client-csharp
+cp .env.example .env
+```
+
+Edite `.env` com o token REST da `escola-a` e execute:
+
+```sh
+dotnet run -- site-info
+dotnet run -- list-courses
+dotnet run -- sync-students
+```
+
+Esse cliente C# lista os cursos da `escola-a` e sincroniza os alunos mockados no curso configurado por `MOODLE_DEFAULT_COURSE_ID`.
+
 ## Como evoluir para um banco externo real
 
 Quando o teste com JSON estiver funcionando, substitua a leitura de `students.mock.json` por um adaptador de leitura do banco externo.

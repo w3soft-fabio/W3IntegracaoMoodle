@@ -1,0 +1,38 @@
+[
+  {
+    "username": "larissa.monteiro",
+    "firstname": "Larissa",
+    "lastname": "Monteiro",
+    "email": "larissa.monteiro@example.edu.br",
+    "idnumber": "EXT-2026-0301",
+    "city": "Belo Horizonte",
+    "country": "BR"
+  },
+  {
+    "username": "gustavo.nogueira",
+    "firstname": "Gustavo",
+    "lastname": "Nogueira",
+    "email": "gustavo.nogueira@example.edu.br",
+    "idnumber": "EXT-2026-0302",
+    "city": "Curitiba",
+    "country": "BR"
+  },
+  {
+    "username": "renata.ferreira",
+    "firstname": "Renata",
+    "lastname": "Ferreira",
+    "email": "renata.ferreira@example.edu.br",
+    "idnumber": "EXT-2026-0303",
+    "city": "Porto Alegre",
+    "country": "BR"
+  },
+  {
+    "username": "eduardo.barros",
+    "firstname": "Eduardo",
+    "lastname": "Barros",
+    "email": "eduardo.barros@example.edu.br",
+    "idnumber": "EXT-2026-0304",
+    "city": "Florianopolis",
+    "country": "BR"
+  }
+]

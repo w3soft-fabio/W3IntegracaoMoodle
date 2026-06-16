@@ -234,6 +234,12 @@ O proxy pode ser Caddy, Traefik ou Nginx. A escolha deve considerar automacao de
 
 Cada instituicao deve possuir um banco logico e um usuario exclusivo.
 
+Documentacao detalhada deste passo:
+
+```text
+docs/passo-04-criar-bancos-e-usuarios.md
+```
+
 Exemplo para MariaDB:
 
 ```sql

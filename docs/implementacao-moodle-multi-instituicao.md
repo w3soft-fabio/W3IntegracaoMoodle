@@ -266,6 +266,12 @@ Regras:
 
 Criar um arquivo de composicao para as instituicoes, por exemplo `docker-compose.instituicoes.yml`.
 
+Documentacao detalhada deste passo:
+
+```text
+docs/passo-05-criar-servico-moodle-por-instituicao.md
+```
+
 Exemplo com duas instituicoes:
 
 ```yaml

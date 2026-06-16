@@ -1,0 +1,29 @@
+[
+  {
+    "username": "ana.silva",
+    "firstname": "Ana",
+    "lastname": "Silva",
+    "email": "ana.silva@example.edu.br",
+    "idnumber": "EXT-2026-0001",
+    "city": "Maceio",
+    "country": "BR"
+  },
+  {
+    "username": "bruno.santos",
+    "firstname": "Bruno",
+    "lastname": "Santos",
+    "email": "bruno.santos@example.edu.br",
+    "idnumber": "EXT-2026-0002",
+    "city": "Maceio",
+    "country": "BR"
+  },
+  {
+    "username": "carla.oliveira",
+    "firstname": "Carla",
+    "lastname": "Oliveira",
+    "email": "carla.oliveira@example.edu.br",
+    "idnumber": "EXT-2026-0003",
+    "city": "Maceio",
+    "country": "BR"
+  }
+]

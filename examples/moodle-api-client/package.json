@@ -1,0 +1,16 @@
+{
+  "name": "moodle-api-client-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Exemplo simples e seguro para consumir a API REST do Moodle.",
+  "scripts": {
+    "site-info": "node src/site-info.js",
+    "list-courses": "node src/list-courses.js",
+    "sync-students": "node src/sync-students.js",
+    "check": "node --check src/config.js && node --check src/moodle-client.js && node --check src/site-info.js && node --check src/list-courses.js && node --check src/sync-students.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

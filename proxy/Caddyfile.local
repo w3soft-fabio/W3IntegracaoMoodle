@@ -1,0 +1,3 @@
+:80 {
+    respond "Proxy local da infraestrutura Moodle funcionando" 200
+}

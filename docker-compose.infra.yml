@@ -1,0 +1,72 @@
+services:
+  db:
+    image: mariadb:10.11
+    container_name: moodle_db
+    restart: unless-stopped
+    env_file:
+      - ./secrets/infra.local.env
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb_file_per_table=1
+    volumes:
+      - moodle_db_data:/var/lib/mysql
+    networks:
+      - moodle_net
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p$${MARIADB_ROOT_PASSWORD} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: moodle_redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+    volumes:
+      - moodle_redis_data:/data
+    networks:
+      - moodle_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  proxy:
+    image: caddy:2-alpine
+    container_name: moodle_proxy
+    restart: unless-stopped
+    ports:
+      - "8088:80"
+      - "8443:443"
+    volumes:
+      - ./proxy/Caddyfile.local:/etc/caddy/Caddyfile:ro
+      - moodle_caddy_data:/data
+      - moodle_caddy_config:/config
+    networks:
+      - moodle_net
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  moodle_db_data:
+    name: moodle_db_data
+  moodle_redis_data:
+    name: moodle_redis_data
+  moodle_caddy_data:
+    name: moodle_caddy_data
+  moodle_caddy_config:
+    name: moodle_caddy_config
+
+networks:
+  moodle_net:
+    name: moodle_net
+    driver: bridge

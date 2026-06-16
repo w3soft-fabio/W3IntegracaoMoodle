@@ -43,6 +43,9 @@ Ao final deste passo:
 
 - o container `moodle_redis` estara rodando;
 - a imagem `w3soft/moodle:2026.06.1-local` tera a extensao PHP `redis`;
+- a imagem Moodle usara `moodle/docker-entrypoint.sh` como entrypoint;
+- o entrypoint configurara o Apache para servir o Moodle em subcaminhos como `/i/escola-a`;
+- o Caddy encaminhara `/i/escola-a/` para `moodle_escola_a` e `/i/escola-b/` para `moodle_escola_b`;
 - `moodle_escola_a` usara prefixo `escola_a_`;
 - `moodle_escola_b` usara prefixo `escola_b_`;
 - cada Moodle gravara sessoes no Redis com prefixos separados;
@@ -117,6 +120,8 @@ docker-compose.infra.yml
 docker-compose.instituicoes.yml
 moodle/Dockerfile
 moodle/config.php
+moodle/docker-entrypoint.sh
+proxy/Caddyfile.local
 secrets/escola-a.local.env
 secrets/escola-b.local.env
 ```
@@ -156,6 +161,15 @@ Para cache de aplicacao, quando voce configurar pelo painel administrativo do Mo
 escola_a_cache_
 escola_b_cache_
 ```
+
+Para acesso via proxy local, o commit `334f846da94f93ec61f6e9fab3e8a80430cbbb0a` tambem padroniza:
+
+```text
+Escola A: http://localhost:8088/i/escola-a/
+Escola B: http://localhost:8088/i/escola-b/
+```
+
+O Moodle recebe o path publico pela variavel `MOODLE_URL`. O entrypoint da imagem extrai esse path e gera um `Alias` no Apache para que o Moodle funcione atras do Caddy usando esses subcaminhos.
 
 ## Referencias oficiais usadas
 
@@ -316,6 +330,30 @@ moodle_escola_b
 
 ## Etapa 6: Verificar as variaveis Redis de cada instituicao
 
+Primeiro confirme a URL publica de cada instituicao, porque o entrypoint usa o path de `MOODLE_URL` para configurar o Apache:
+
+```sh
+grep '^MOODLE_URL' secrets/escola-a.local.env
+```
+
+Resultado esperado para escola A:
+
+```env
+MOODLE_URL=http://localhost:8088/i/escola-a
+```
+
+```sh
+grep '^MOODLE_URL' secrets/escola-b.local.env
+```
+
+Resultado esperado para escola B:
+
+```env
+MOODLE_URL=http://localhost:8088/i/escola-b
+```
+
+Se preferir informar o path diretamente, voce pode usar `MOODLE_PUBLIC_PATH`, mas neste laboratorio ele nao e necessario porque o entrypoint consegue extrair `/i/escola-a` e `/i/escola-b` de `MOODLE_URL`.
+
 Execute:
 
 ```sh
@@ -447,6 +485,46 @@ Altere para incluir:
 
 Salve o arquivo.
 
+Ainda no `Dockerfile`, confirme que o entrypoint do Moodle e copiado para dentro da imagem:
+
+```dockerfile
+COPY php.ini /usr/local/etc/php/conf.d/moodle.ini
+COPY config.php /var/www/html/config.php
+COPY docker-entrypoint.sh /usr/local/bin/moodle-entrypoint
+```
+
+Confirme tambem que ele recebe permissao de execucao:
+
+```dockerfile
+RUN chown www-data:www-data /var/www/html/config.php \
+    && chmod +x /usr/local/bin/moodle-entrypoint
+```
+
+E que o final do arquivo define o entrypoint e o comando padrao:
+
+```dockerfile
+WORKDIR /var/www/html
+
+ENTRYPOINT ["moodle-entrypoint"]
+CMD ["apache2-foreground"]
+```
+
+Esse entrypoint e importante para este passo porque ele prepara o Apache para servir o Moodle no subcaminho definido em `MOODLE_URL`, como `/i/escola-a` ou `/i/escola-b`.
+
+Confirme que o arquivo existe:
+
+```sh
+sed -n '1,180p' moodle/docker-entrypoint.sh
+```
+
+O script deve:
+
+- ler `MOODLE_PUBLIC_PATH`, se ela existir;
+- se `MOODLE_PUBLIC_PATH` nao existir, extrair o path de `MOODLE_URL`;
+- validar o path publico;
+- criar `/etc/apache2/conf-enabled/moodle-public-path.conf` com os `Alias` do Apache;
+- chamar `docker-php-entrypoint "$@"` no final.
+
 Recrie a imagem local:
 
 ```sh
@@ -458,6 +536,8 @@ O que este comando faz:
 - le o servico `moodle` do `docker-compose.yml`;
 - executa novamente o `moodle/Dockerfile`;
 - instala a extensao `redis`;
+- copia `moodle/docker-entrypoint.sh` para `/usr/local/bin/moodle-entrypoint`;
+- define `moodle-entrypoint` como entrypoint da imagem;
 - recria a imagem `w3soft/moodle:2026.06.1-local`.
 
 Se voce estiver usando apenas `docker-compose.instituicoes.yml`, confira se a imagem esperada existe:
@@ -756,16 +836,49 @@ Resultado esperado:
 
 ## Etapa 14: Acessar os Moodles e gerar sessoes reais
 
+Antes de abrir o navegador, confirme que o proxy local tem as rotas das instituicoes:
+
+```sh
+sed -n '1,120p' proxy/Caddyfile.local
+```
+
+O arquivo deve conter:
+
+```caddyfile
+:80 {
+    redir /i/escola-a /i/escola-a/
+    redir /i/escola-b /i/escola-b/
+
+    handle /i/escola-a/* {
+        reverse_proxy moodle_escola_a:80
+    }
+
+    handle /i/escola-b/* {
+        reverse_proxy moodle_escola_b:80
+    }
+
+    respond "Proxy local da infraestrutura Moodle funcionando" 200
+}
+```
+
+Essas rotas fazem o Caddy enviar cada subcaminho para o container Moodle correto. Os `redir` garantem que a URL sem barra final tambem funcione.
+
+Se voce alterar o `Caddyfile`, recarregue o proxy:
+
+```sh
+docker compose -f docker-compose.infra.yml up -d --force-recreate proxy
+```
+
 Acesse no navegador:
 
 ```text
-http://localhost:8088/i/escola-a
+http://localhost:8088/i/escola-a/
 ```
 
 Depois acesse:
 
 ```text
-http://localhost:8088/i/escola-b
+http://localhost:8088/i/escola-b/
 ```
 
 Faca login ou avance ate a tela de instalacao inicial, dependendo do estado do seu ambiente.
@@ -828,7 +941,7 @@ Para cache de aplicacao, use o painel administrativo do Moodle em cada instituic
 
 Para a escola A:
 
-1. Acesse `http://localhost:8088/i/escola-a`.
+1. Acesse `http://localhost:8088/i/escola-a/`.
 2. Entre como administrador.
 3. Va em `Site administration`.
 4. Va em `Plugins`.
@@ -1081,6 +1194,32 @@ docker exec moodle_escola_a printenv | grep '^MOODLE_REDIS'
 docker exec moodle_escola_b printenv | grep '^MOODLE_REDIS'
 ```
 
+Confirme URLs publicas usadas pelo entrypoint:
+
+```sh
+docker exec moodle_escola_a printenv | grep '^MOODLE_URL'
+```
+
+```sh
+docker exec moodle_escola_b printenv | grep '^MOODLE_URL'
+```
+
+Confirme o arquivo de `Alias` criado no Apache:
+
+```sh
+docker exec moodle_escola_a test -f /etc/apache2/conf-enabled/moodle-public-path.conf
+```
+
+```sh
+docker exec moodle_escola_b test -f /etc/apache2/conf-enabled/moodle-public-path.conf
+```
+
+Confirme as rotas do Caddy:
+
+```sh
+sed -n '1,120p' proxy/Caddyfile.local
+```
+
 Confirme prefixos:
 
 ```sh
@@ -1195,6 +1334,69 @@ Depois recrie os containers:
 docker compose -f docker-compose.instituicoes.yml up -d --force-recreate
 ```
 
+### `http://localhost:8088/i/escola-a/` nao abre o Moodle
+
+Possiveis causas:
+
+- `proxy/Caddyfile.local` nao tem a rota `/i/escola-a/*`;
+- o proxy nao foi recriado depois da alteracao no `Caddyfile`;
+- `moodle_escola_a` nao esta na rede `moodle_net`;
+- `MOODLE_URL` nao aponta para `http://localhost:8088/i/escola-a`.
+
+Verifique:
+
+```sh
+sed -n '1,120p' proxy/Caddyfile.local
+```
+
+```sh
+docker compose -f docker-compose.infra.yml ps
+```
+
+```sh
+docker compose -f docker-compose.instituicoes.yml ps
+```
+
+```sh
+docker exec moodle_escola_a printenv | grep '^MOODLE_URL'
+```
+
+Se o `Caddyfile` estiver correto, recrie o proxy:
+
+```sh
+docker compose -f docker-compose.infra.yml up -d --force-recreate proxy
+```
+
+### `Invalid MOODLE public path`
+
+Causa provavel:
+
+```text
+MOODLE_PUBLIC_PATH ou o path de MOODLE_URL tem caracteres fora do padrao aceito pelo entrypoint.
+```
+
+O entrypoint aceita apenas letras, numeros, `/`, `_` e `-` no path publico.
+
+Valores validos:
+
+```env
+MOODLE_URL=http://localhost:8088/i/escola-a
+MOODLE_PUBLIC_PATH=/i/escola-a
+```
+
+Valores problematicos:
+
+```env
+MOODLE_PUBLIC_PATH=/i/escola a
+MOODLE_PUBLIC_PATH=/i/escola.a
+```
+
+Depois de corrigir o `.env`, recrie o container da instituicao:
+
+```sh
+docker compose -f docker-compose.instituicoes.yml up -d --force-recreate moodle_escola_a
+```
+
 ## Rollback deste passo
 
 Se precisar voltar atras temporariamente, remova ou comente as variaveis Redis nos arquivos:
@@ -1261,4 +1463,3 @@ Se o Redis for gerenciado por provedor cloud, valide:
 - metricas;
 - backups ou persistencia;
 - latencia entre Moodle e Redis.
-

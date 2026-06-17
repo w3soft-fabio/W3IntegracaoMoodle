@@ -33,10 +33,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN rm -rf /var/www/html/* \
     && git clone --branch MOODLE_405_STABLE --depth 1 https://github.com/moodle/moodle.git /var/www/html \
-    && mkdir -p /var/www/moodledata/lang \
     && curl -fsSL "https://download.moodle.org/download.php/direct/langpack/4.5/pt_br.zip" -o /tmp/pt_br.zip \
-    && unzip /tmp/pt_br.zip -d /var/www/moodledata/lang \
+    && unzip /tmp/pt_br.zip -d /var/www/html/lang \
     && rm /tmp/pt_br.zip \
+    && mkdir -p /var/www/moodledata \
     && chown -R www-data:www-data /var/www/html /var/www/moodledata
 
 COPY php.ini /usr/local/etc/php/conf.d/moodle.ini

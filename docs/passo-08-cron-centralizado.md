@@ -448,11 +448,12 @@ docker exec -u www-data moodle_escola_b php /var/www/html/admin/cli/cron.php
 
 Se funcionar, use `-u www-data` no script central.
 
-## Etapa 11: Criar a pasta de scripts e logs
+## Etapa 11: Criar as pastas de scripts, configuracao e logs
 
 Crie as pastas:
 
 ```sh
+mkdir -p config
 mkdir -p scripts
 mkdir -p logs/moodle-cron
 ```
@@ -460,6 +461,7 @@ mkdir -p logs/moodle-cron
 Verifique:
 
 ```sh
+ls -la config
 ls -la scripts
 ls -la logs
 ```
@@ -467,11 +469,40 @@ ls -la logs
 Resultado esperado:
 
 ```text
+config
 scripts
 logs/moodle-cron
 ```
 
-## Etapa 12: Criar o script central de cron
+## Etapa 12: Criar a lista central de instituicoes
+
+A partir deste ponto, a fonte da verdade para o cron passa a ser:
+
+```text
+config/moodle-cron-tenants.txt
+```
+
+Crie o arquivo:
+
+```sh
+nano config/moodle-cron-tenants.txt
+```
+
+Cole o conteudo abaixo:
+
+```text
+# Fonte da verdade para o cron centralizado do Moodle.
+# Uma instituicao por linha, usando o nome do container Docker.
+
+moodle_escola_a
+moodle_escola_b
+```
+
+Salve o arquivo.
+
+Quando uma nova instituicao for criada, ela sera adicionada nesse arquivo, e nao diretamente no `crontab`.
+
+## Etapa 13: Criar o script central de cron
 
 Crie o arquivo:
 
@@ -491,7 +522,7 @@ PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 PROJECT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 LOG_DIR="$PROJECT_DIR/logs/moodle-cron"
 LOCK_ROOT="${TMPDIR:-/tmp}/moodle-cron-locks"
-DEFAULT_TENANTS="moodle_escola_a moodle_escola_b"
+TENANTS_FILE="$PROJECT_DIR/config/moodle-cron-tenants.txt"
 
 mkdir -p "$LOG_DIR"
 mkdir -p "$LOCK_ROOT"
@@ -504,6 +535,18 @@ log_line() {
   tenant="$1"
   message="$2"
   printf "[%s] %s\n" "$(timestamp)" "$message" >> "$LOG_DIR/$tenant.log"
+}
+
+load_default_tenants() {
+  if [ ! -f "$TENANTS_FILE" ]; then
+    printf "ERRO: arquivo de instituicoes nao encontrado: %s\n" "$TENANTS_FILE" >&2
+    return 1
+  fi
+
+  sed \
+    -e 's/[[:space:]]*#.*$//' \
+    -e '/^[[:space:]]*$/d' \
+    "$TENANTS_FILE"
 }
 
 run_tenant_cron() {
@@ -543,15 +586,14 @@ run_tenant_cron() {
   return "$status"
 }
 
-if [ "$#" -gt 0 ]; then
-  TENANTS="$*"
-else
-  TENANTS="${MOODLE_CRON_TENANTS:-$DEFAULT_TENANTS}"
+if [ "$#" -eq 0 ]; then
+  tenants="$(load_default_tenants)" || exit 1
+  set -- $tenants
 fi
 
 FINAL_STATUS=0
 
-for tenant in $TENANTS; do
+for tenant in "$@"; do
   run_tenant_cron "$tenant" || FINAL_STATUS=1
 done
 
@@ -568,29 +610,173 @@ Enter
 Ctrl + X
 ```
 
-## Etapa 13: Tornar o script executavel
+## Etapa 14: Criar o script distribuidor de cron
+
+Crie o arquivo:
+
+```sh
+nano scripts/run-moodle-crons-distributed.sh
+```
+
+Cole o conteudo abaixo:
+
+```sh
+#!/usr/bin/env sh
+
+set -u
+
+PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
+PROJECT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+TENANTS_FILE="$PROJECT_DIR/config/moodle-cron-tenants.txt"
+RUNNER="$PROJECT_DIR/scripts/run-moodle-crons.sh"
+LOG_DIR="$PROJECT_DIR/logs/moodle-cron"
+DISTRIBUTOR_LOG="$LOG_DIR/distributor.log"
+# O minuto sera dividido em 4 janelas fixas: 00s, 15s, 30s e 45s.
+# A quantidade de instituicoes por janela e calculada dinamicamente.
+WINDOW_COUNT=4
+WINDOW_STEP_SECONDS=15
+PIDS=""
+
+mkdir -p "$LOG_DIR"
+
+timestamp() {
+  date "+%Y-%m-%d %H:%M:%S"
+}
+
+log_distributor() {
+  printf "[%s] %s\n" "$(timestamp)" "$1" >> "$DISTRIBUTOR_LOG"
+}
+
+load_tenants() {
+  if [ ! -f "$TENANTS_FILE" ]; then
+    printf "ERRO: arquivo de instituicoes nao encontrado: %s\n" "$TENANTS_FILE" >&2
+    return 1
+  fi
+
+  sed \
+    -e 's/[[:space:]]*#.*$//' \
+    -e '/^[[:space:]]*$/d' \
+    "$TENANTS_FILE"
+}
+
+run_group() {
+  delay="$1"
+  shift
+
+  if [ "$#" -eq 0 ]; then
+    return 0
+  fi
+
+  log_distributor "SCHEDULE: delay ${delay}s: $*"
+
+  (
+    sleep "$delay"
+    "$RUNNER" "$@"
+  ) &
+
+  PIDS="$PIDS $!"
+}
+
+tenants="$(load_tenants)" || exit 1
+set -- $tenants
+
+if [ "$#" -eq 0 ]; then
+  log_distributor "SKIP: nenhuma instituicao configurada"
+  exit 0
+fi
+
+# Calcula grupos equilibrados entre as janelas.
+# Com menos de 4 instituicoes, mantemos tudo na janela 00s.
+# Exemplo: 21 instituicoes => base 5, resto 1 => grupos 6, 5, 5, 5.
+total_tenants="$#"
+
+if [ "$total_tenants" -lt "$WINDOW_COUNT" ]; then
+  active_window_count=1
+else
+  active_window_count="$WINDOW_COUNT"
+fi
+
+base_group_size=$((total_tenants / active_window_count))
+remainder=$((total_tenants % active_window_count))
+window_number=1
+group_index=0
+delay=0
+group_tenants=""
+group_size="$base_group_size"
+
+if [ "$window_number" -le "$remainder" ]; then
+  group_size=$((group_size + 1))
+fi
+
+log_distributor "DISTRIBUTE: total $total_tenants, windows $active_window_count, base $base_group_size, remainder $remainder"
+
+for tenant in "$@"; do
+  group_index=$((group_index + 1))
+  group_tenants="$group_tenants $tenant"
+
+  if [ "$group_index" -eq "$group_size" ]; then
+    run_group "$delay" $group_tenants
+    window_number=$((window_number + 1))
+    delay=$((delay + WINDOW_STEP_SECONDS))
+    group_index=0
+    group_tenants=""
+
+    group_size="$base_group_size"
+
+    if [ "$window_number" -le "$remainder" ]; then
+      group_size=$((group_size + 1))
+    fi
+  fi
+done
+
+if [ "$group_index" -gt 0 ]; then
+  run_group "$delay" $group_tenants
+fi
+
+FINAL_STATUS=0
+
+for pid in $PIDS; do
+  wait "$pid" || FINAL_STATUS=1
+done
+
+exit "$FINAL_STATUS"
+```
+
+Esse script le `config/moodle-cron-tenants.txt` e distribui automaticamente:
+
+```text
+2 instituicoes: 00s = 2, 15s = 0, 30s = 0, 45s = 0
+10 instituicoes: 00s = 3, 15s = 3, 30s = 2, 45s = 2
+21 instituicoes: 00s = 6, 15s = 5, 30s = 5, 45s = 5
+50 instituicoes: 00s = 13, 15s = 13, 30s = 12, 45s = 12
+```
+
+## Etapa 15: Tornar os scripts executaveis
 
 Execute:
 
 ```sh
-chmod +x scripts/run-moodle-crons.sh
+chmod +x scripts/run-moodle-crons.sh scripts/run-moodle-crons-distributed.sh
 ```
 
 Verifique:
 
 ```sh
 ls -la scripts/run-moodle-crons.sh
+ls -la scripts/run-moodle-crons-distributed.sh
 ```
 
 Resultado esperado:
 
 ```text
 -rwxr-xr-x ... scripts/run-moodle-crons.sh
+-rwxr-xr-x ... scripts/run-moodle-crons-distributed.sh
 ```
 
 O `x` indica que o arquivo pode ser executado.
 
-## Etapa 14: Executar o script para todas as instituicoes
+## Etapa 16: Executar o script para todas as instituicoes
 
 Execute:
 
@@ -637,7 +823,7 @@ START: executando cron
 OK: cron finalizado com sucesso
 ```
 
-## Etapa 15: Executar o script para uma unica instituicao
+## Etapa 17: Executar o script para uma unica instituicao
 
 Execute somente a escola A:
 
@@ -657,7 +843,7 @@ Isso e util para:
 - investigar erro isolado;
 - distribuir execucoes em horarios diferentes.
 
-## Etapa 16: Testar o controle contra execucao duplicada
+## Etapa 18: Testar o controle contra execucao duplicada
 
 O script usa uma pasta de lock por instituicao em:
 
@@ -705,9 +891,38 @@ Execute novamente:
 
 Agora o cron deve rodar normalmente.
 
-## Etapa 17: Agendar com crontab do host
+## Etapa 19: Testar a distribuicao automatica
 
-Nesta etapa, o host sera responsavel por chamar o script.
+Execute:
+
+```sh
+./scripts/run-moodle-crons-distributed.sh
+```
+
+Verifique o log do distribuidor:
+
+```sh
+tail -n 40 logs/moodle-cron/distributor.log
+```
+
+Com duas instituicoes configuradas, o resultado esperado e que ambas entrem no primeiro grupo:
+
+```text
+SCHEDULE: delay 0s: moodle_escola_a moodle_escola_b
+```
+
+Quando houver mais instituicoes, a distribuicao sera feita automaticamente:
+
+```text
+1 instituicao: 00s = 1, 15s = 0, 30s = 0, 45s = 0
+4 instituicoes: 00s = 1, 15s = 1, 30s = 1, 45s = 1
+5 instituicoes: 00s = 2, 15s = 1, 30s = 1, 45s = 1
+20 instituicoes: 00s = 5, 15s = 5, 30s = 5, 45s = 5
+```
+
+## Etapa 20: Agendar com crontab do host
+
+Nesta etapa, o host sera responsavel por chamar o script distribuidor.
 
 No macOS e em Linux, voce pode usar `crontab`.
 
@@ -717,23 +932,22 @@ Abra o editor do crontab:
 crontab -e
 ```
 
-Adicione estas linhas:
+Adicione esta linha:
 
 ```cron
-* * * * * cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_a
-* * * * * sleep 15; cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_b
+* * * * * cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons-distributed.sh
 ```
 
 Salve e feche o editor.
 
-O que essas linhas fazem:
+O que essa linha faz:
 
-- a escola A roda no inicio de cada minuto;
-- a escola B roda 15 segundos depois;
-- os crons nao iniciam exatamente ao mesmo tempo;
-- cada comando entra na pasta do projeto antes de chamar o script.
+- chama o distribuidor uma vez por minuto;
+- o distribuidor le `config/moodle-cron-tenants.txt`;
+- o distribuidor separa as instituicoes em grupos equilibrados;
+- os grupos rodam em 00s, 15s, 30s e 45s.
 
-## Etapa 18: Verificar se o crontab foi salvo
+## Etapa 21: Verificar se o crontab foi salvo
 
 Execute:
 
@@ -744,11 +958,10 @@ crontab -l
 Resultado esperado:
 
 ```cron
-* * * * * cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_a
-* * * * * sleep 15; cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_b
+* * * * * cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons-distributed.sh
 ```
 
-## Etapa 19: Aguardar e validar execucao automatica
+## Etapa 22: Aguardar e validar execucao automatica
 
 Aguarde pelo menos 2 minutos.
 
@@ -784,7 +997,7 @@ Para parar o `tail -f`, pressione:
 Ctrl + C
 ```
 
-## Etapa 20: Validar pelo painel do Moodle
+## Etapa 23: Validar pelo painel do Moodle
 
 Acesse a escola A no navegador e entre como administrador.
 
@@ -805,7 +1018,7 @@ Se as datas nao atualizarem:
 - confira os logs em `logs/moodle-cron/`;
 - rode o script manualmente para comparar.
 
-## Etapa 21: Verificar containers durante a execucao
+## Etapa 24: Verificar containers durante a execucao
 
 Liste os containers:
 
@@ -824,7 +1037,7 @@ moodle_escola_b
 
 Isso confirma que o modelo usa `docker exec` dentro dos containers existentes.
 
-## Etapa 22: Verificar consumo basico
+## Etapa 25: Verificar consumo basico
 
 Execute:
 
@@ -842,7 +1055,7 @@ Esse comando mostra um snapshot de:
 
 Use esse comando antes e depois do cron para observar o impacto.
 
-## Etapa 23: Adicionar uma nova instituicao ao script
+## Etapa 26: Adicionar uma nova instituicao ao cron centralizado
 
 Quando existir uma nova instituicao, por exemplo:
 
@@ -850,67 +1063,65 @@ Quando existir uma nova instituicao, por exemplo:
 moodle_escola_c
 ```
 
-Voce tem duas opcoes.
+Adicione o nome do container no fim de:
 
-Opcao 1: passar o container diretamente no crontab:
-
-```cron
-* * * * * sleep 30; cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_c
+```text
+config/moodle-cron-tenants.txt
 ```
 
-Opcao 2: editar o script e adicionar no valor padrao:
+Exemplo:
 
 ```sh
-nano scripts/run-moodle-crons.sh
+printf "%s\n" "moodle_escola_c" >> config/moodle-cron-tenants.txt
 ```
 
-Alterar:
-
-```sh
-DEFAULT_TENANTS="moodle_escola_a moodle_escola_b"
-```
-
-Para:
-
-```sh
-DEFAULT_TENANTS="moodle_escola_a moodle_escola_b moodle_escola_c"
-```
-
-Depois teste:
+Depois teste a instituicao isoladamente:
 
 ```sh
 ./scripts/run-moodle-crons.sh moodle_escola_c
 ```
 
-## Etapa 24: Distribuir execucoes quando houver mais instituicoes
+E teste a distribuicao automatica:
 
-Para poucas instituicoes, usar `sleep` no crontab e suficiente.
-
-Exemplo com quatro instituicoes:
-
-```cron
-* * * * * cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_a
-* * * * * sleep 15; cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_b
-* * * * * sleep 30; cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_c
-* * * * * sleep 45; cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_d
+```sh
+./scripts/run-moodle-crons-distributed.sh
 ```
 
-Para muitas instituicoes, agrupe por blocos:
+Verifique o log do distribuidor:
 
-```cron
-* * * * * cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_a moodle_escola_b moodle_escola_c
-* * * * * sleep 20; cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_d moodle_escola_e moodle_escola_f
-* * * * * sleep 40; cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_g moodle_escola_h moodle_escola_i
+```sh
+tail -n 40 logs/moodle-cron/distributor.log
+```
+
+Nao edite o `crontab` para cada nova instituicao. O `crontab` fica fixo; somente `config/moodle-cron-tenants.txt` muda.
+
+## Etapa 27: Entender a distribuicao quando houver mais instituicoes
+
+O distribuidor usa a ordem do arquivo `config/moodle-cron-tenants.txt`.
+
+Exemplos:
+
+```text
+2 instituicoes: 00s = 2, 15s = 0, 30s = 0, 45s = 0
+10 instituicoes: 00s = 3, 15s = 3, 30s = 2, 45s = 2
+21 instituicoes: 00s = 6, 15s = 5, 30s = 5, 45s = 5
+50 instituicoes: 00s = 13, 15s = 13, 30s = 12, 45s = 12
+```
+
+O log do distribuidor mostra o calculo usado a cada minuto:
+
+```text
+DISTRIBUTE: total 21, windows 4, base 5, remainder 1
 ```
 
 Regra pratica:
 
-- nao inicie todos os crons ao mesmo tempo;
+- mantenha a ordem do arquivo organizada;
 - evite concorrencia alta no banco;
 - monitore tempo de execucao;
-- se uma instituicao demora muito, coloque ela em uma janela separada.
+- se uma instituicao demora muito, coloque ela em uma posicao com menor concorrencia.
 
-## Etapa 25: Remover o agendamento local
+## Etapa 28: Remover o agendamento local
 
 Se quiser parar o agendamento automatico local, execute:
 
@@ -921,8 +1132,7 @@ crontab -e
 Remova as linhas relacionadas ao Moodle:
 
 ```cron
-* * * * * cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_a
-* * * * * sleep 15; cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_b
+* * * * * cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons-distributed.sh
 ```
 
 Salve e verifique:
@@ -931,7 +1141,7 @@ Salve e verifique:
 crontab -l
 ```
 
-## Etapa 26: Troubleshooting
+## Etapa 29: Troubleshooting
 
 ### Erro: `Cannot connect to the Docker daemon`
 
@@ -1043,20 +1253,44 @@ Verifique permissao:
 
 ```sh
 ls -la scripts/run-moodle-crons.sh
+ls -la scripts/run-moodle-crons-distributed.sh
 ```
 
 Execute com caminho completo:
 
 ```sh
 cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker"
-./scripts/run-moodle-crons.sh moodle_escola_a
+./scripts/run-moodle-crons-distributed.sh
 ```
 
 Veja os logs:
 
 ```sh
 tail -n 120 logs/moodle-cron/moodle_escola_a.log
+tail -n 120 logs/moodle-cron/distributor.log
 ```
+
+### A distribuicao parece diferente do esperado
+
+O distribuidor calcula os grupos com base na quantidade total de instituicoes.
+
+Para conferir o calculo, veja:
+
+```sh
+tail -n 120 logs/moodle-cron/distributor.log
+```
+
+Procure por linhas como:
+
+```text
+DISTRIBUTE: total 21, windows 4, base 5, remainder 1
+SCHEDULE: delay 0s: ...
+SCHEDULE: delay 15s: ...
+SCHEDULE: delay 30s: ...
+SCHEDULE: delay 45s: ...
+```
+
+Se houver menos de 4 instituicoes, o distribuidor mantem todas na janela de 00s.
 
 ### Log mostra `SKIP: cron anterior ainda esta em execucao`
 
@@ -1093,9 +1327,12 @@ Marque cada item ao concluir:
 - [ ] Parei o `moodle_cron` antigo, se ele estava rodando.
 - [ ] Executei o cron manual da escola A.
 - [ ] Executei o cron manual da escola B.
+- [ ] Criei `config/moodle-cron-tenants.txt`.
 - [ ] Criei `scripts/run-moodle-crons.sh`.
-- [ ] Tornei o script executavel.
+- [ ] Criei `scripts/run-moodle-crons-distributed.sh`.
+- [ ] Tornei os scripts executaveis.
 - [ ] Rodei o script para todas as instituicoes.
+- [ ] Testei a distribuicao automatica.
 - [ ] Verifiquei logs em `logs/moodle-cron/`.
 - [ ] Configurei o `crontab`.
 - [ ] Aguardei pelo menos 2 minutos.
@@ -1116,19 +1353,33 @@ Comando central por script:
 ./scripts/run-moodle-crons.sh moodle_escola_a moodle_escola_b
 ```
 
+Fonte da verdade para o agendamento automatico:
+
+```text
+config/moodle-cron-tenants.txt
+```
+
+Comando distribuido:
+
+```sh
+./scripts/run-moodle-crons-distributed.sh
+```
+
 Agendamento local:
 
 ```cron
-* * * * * cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_a
-* * * * * sleep 15; cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons.sh moodle_escola_b
+* * * * * cd "/Users/maxwellfarias/Documents/Projects/1. w3Soft/moodle-docker" && ./scripts/run-moodle-crons-distributed.sh
 ```
 
 Arquivos criados neste passo:
 
 ```text
+config/moodle-cron-tenants.txt
 scripts/run-moodle-crons.sh
+scripts/run-moodle-crons-distributed.sh
 logs/moodle-cron/moodle_escola_a.log
 logs/moodle-cron/moodle_escola_b.log
+logs/moodle-cron/distributor.log
 ```
 
 Modelo final:
@@ -1136,10 +1387,14 @@ Modelo final:
 ```text
 Host crontab
   |
-  +-- docker exec moodle_escola_a php /var/www/html/admin/cli/cron.php
-  |
-  +-- sleep 15
-      |
-      +-- docker exec moodle_escola_b php /var/www/html/admin/cli/cron.php
+  +-- scripts/run-moodle-crons-distributed.sh
+        |
+        +-- le config/moodle-cron-tenants.txt
+        |
+        +-- calcula grupos equilibrados
+        |
+        +-- 00s: primeiro grupo
+        +-- 15s: segundo grupo
+        +-- 30s: terceiro grupo
+        +-- 45s: quarto grupo
 ```
-

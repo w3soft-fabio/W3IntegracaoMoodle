@@ -104,6 +104,9 @@ delay=0
 group_tenants=""
 group_size="$base_group_size"
 
+# -le significa "less than or equal to"
+# Se for menor ou igual ao resto, soma 1 ao grupo size, para distribuir o resto.
+# Exemplo: 21 instituicoes => base 5, resto 1 => grupos 6, 5, 5, 5.
 if [ "$window_number" -le "$remainder" ]; then
   group_size=$((group_size + 1))
 fi

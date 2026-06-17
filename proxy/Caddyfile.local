@@ -1,14 +1,22 @@
 :80 {
-    redir /i/escola-a /i/escola-a/
-    redir /i/escola-b /i/escola-b/
+	@home path /
+	redir @home /index.html
 
-    handle /i/escola-a/* {
-        reverse_proxy moodle_escola_a:80
-    }
+	redir /i/escola-a /i/escola-a/
+	redir /i/escola-b /i/escola-b/
 
-    handle /i/escola-b/* {
-        reverse_proxy moodle_escola_b:80
-    }
+	handle /index.html {
+		root * /srv
+		file_server
+	}
 
-    respond "Proxy local da infraestrutura Moodle funcionando" 200
+	handle /i/escola-a/* {
+		reverse_proxy moodle_escola_a:80
+	}
+
+	handle /i/escola-b/* {
+		reverse_proxy moodle_escola_b:80
+	}
+
+	respond "Proxy local da infraestrutura Moodle funcionando" 200
 }

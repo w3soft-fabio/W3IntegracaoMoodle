@@ -46,6 +46,7 @@ services:
       - "8443:443"
     volumes:
       - ./proxy/Caddyfile.local:/etc/caddy/Caddyfile:ro
+      - ./proxy/site:/srv:ro
       - moodle_caddy_data:/data
       - moodle_caddy_config:/config
     networks:

@@ -405,6 +405,12 @@ Se a imagem for migrada para PHP-FPM puro, o proxy precisara de uma camada HTTP 
 
 ## Passo 8: Substituir o container permanente de cron por agendamento central
 
+Documentacao detalhada deste passo:
+
+```text
+docs/passo-08-cron-centralizado.md
+```
+
 O projeto atual possui um servico `cron` permanente. Em varias instituicoes, nao e recomendado criar um container de cron permanente para cada uma.
 
 Criar um script central, por exemplo `scripts/run-moodle-crons.sh`, que execute:

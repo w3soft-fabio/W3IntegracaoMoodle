@@ -3,3 +3,6 @@
 
 moodle_escola_a
 moodle_escola_b
+moodle_escola_c
+moodle_escola_d
+moodle_escola_e

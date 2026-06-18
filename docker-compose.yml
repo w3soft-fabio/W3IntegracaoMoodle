@@ -56,7 +56,7 @@ services:
   #   volumes:
   #     - moodledata:/var/www/moodledata
   #   command: >
-  #     sh -c "while true; do php /var/www/html/admin/cli/cron.php; sleep 60; done"
+      # sh -c "while true; do php /var/www/html/admin/cli/cron.php; sleep 60; done"
   #   networks:
   #     - moodle_net
 

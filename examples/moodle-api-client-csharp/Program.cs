@@ -336,11 +336,7 @@ sealed class MoodleClient(HttpClient httpClient, MoodleConfig config)
     // e indicada pelo parametro wsfunction enviado em cada requisicao.
     readonly string endpoint = $"{config.BaseUrl}/webservice/rest/server.php";
 
-    public async Task<T> CallAsync<T>(
-        string wsFunction,
-        IEnumerable<KeyValuePair<string, string>> parameters,
-        HttpMethod method
-    )
+    public async Task<T> CallAsync<T>(string wsFunction, IEnumerable<KeyValuePair<string, string>> parameters, HttpMethod method)
     {
         // Parametros obrigatorios para qualquer chamada REST no Moodle:
         // - wstoken: autentica a chamada.

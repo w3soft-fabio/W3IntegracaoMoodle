@@ -41,9 +41,11 @@ RUN rm -rf /var/www/html/* \
 
 COPY php.ini /usr/local/etc/php/conf.d/moodle.ini
 COPY config.php /var/www/html/config.php
+COPY bootstrap/provision.php /var/www/html/bootstrap/provision.php
 COPY docker-entrypoint.sh /usr/local/bin/moodle-entrypoint
 
 RUN chown www-data:www-data /var/www/html/config.php \
+    && chown -R www-data:www-data /var/www/html/bootstrap \
     && chmod +x /usr/local/bin/moodle-entrypoint
 
 WORKDIR /var/www/html

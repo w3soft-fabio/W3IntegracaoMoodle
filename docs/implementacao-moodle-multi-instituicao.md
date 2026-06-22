@@ -556,11 +556,12 @@ Checklist operacional:
 7. Criar volume `moodledata_escola_a`.
 8. Adicionar servico `moodle_escola_a` ao Compose de instituicoes.
 9. Adicionar rota `https://seudominio.com/i/escola-a` no proxy reverso.
-10. Subir o container.
-11. Executar instalacao inicial do Moodle.
-12. Adicionar a instituicao ao agendamento central de cron.
-13. Incluir banco e `moodledata` na rotina de backup.
-14. Incluir container e rota publica no monitoramento.
+10. Preencher as variaveis de bootstrap no arquivo de secrets da instituicao.
+11. Subir o container.
+12. Conferir nos logs que a instalacao inicial e o provisionamento foram concluidos automaticamente.
+13. Adicionar a instituicao ao agendamento central de cron.
+14. Incluir banco e `moodledata` na rotina de backup.
+15. Incluir container e rota publica no monitoramento.
 
 ## Passo 14: Estrategia de atualizacao
 
@@ -615,6 +616,112 @@ Evitar no inicio:
 - backups de containers em vez de dados;
 - crons simultaneos para todas as instituicoes;
 - Kubernetes apenas para resolver isolamento entre instituicoes.
+
+## Passo 16: Bootstrap automatico da instalacao Moodle
+
+A imagem Moodle passa a executar um bootstrap idempotente antes de iniciar o Apache. Esse bootstrap elimina o assistente inicial no navegador e usa somente CLI/PHP interno do Moodle.
+
+Fluxo executado por container:
+
+1. Validar variaveis obrigatorias.
+2. Aguardar o banco da instituicao ficar acessivel.
+3. Verificar se a tabela `mdl_config` existe.
+4. Se o banco estiver vazio, executar `admin/cli/install_database.php --agree-license`.
+5. Se houver tabelas Moodle sem `mdl_config`, falhar explicitamente por instalacao incompleta.
+6. Executar `admin/cli/upgrade.php --non-interactive`.
+7. Executar `/var/www/html/bootstrap/provision.php`.
+8. Iniciar o Apache apenas depois da conclusao do bootstrap.
+
+Variaveis novas por instituicao:
+
+```env
+MOODLE_AUTO_BOOTSTRAP=1
+
+MOODLE_SITE_FULLNAME=Escola E
+MOODLE_SITE_SHORTNAME=escola-e
+MOODLE_SITE_SUMMARY=
+MOODLE_SUPPORT_EMAIL=suporte@example.com
+
+MOODLE_ADMIN_USER=admin
+MOODLE_ADMIN_PASSWORD=preencher-com-secret
+MOODLE_ADMIN_FIRSTNAME=Administrador
+MOODLE_ADMIN_LASTNAME=Principal
+MOODLE_ADMIN_EMAIL=admin@example.com
+MOODLE_ADMIN_CITY=Maceio
+MOODLE_ADMIN_COUNTRY=BR
+MOODLE_ADMIN_TIMEZONE=America/Maceio
+MOODLE_ADMIN_FORCE_PASSWORD_CHANGE_ON_INSTALL=1
+
+MOODLE_WS_SERVICE_NAME=W3Soft Student Sync
+MOODLE_WS_SERVICE_SHORTNAME=w3soft_student_sync
+MOODLE_WS_FUNCTIONS=core_webservice_get_site_info,core_course_get_courses,core_course_get_courses_by_field,core_user_get_users_by_field,core_user_create_users,enrol_manual_enrol_users
+
+MOODLE_WS_USER_USERNAME=svc_integracao
+MOODLE_WS_USER_PASSWORD=preencher-com-secret
+MOODLE_WS_USER_FIRSTNAME=Servico
+MOODLE_WS_USER_LASTNAME=Integracao
+MOODLE_WS_USER_EMAIL=svc_integracao@example.com
+MOODLE_WS_USER_CITY=Maceio
+MOODLE_WS_USER_COUNTRY=BR
+MOODLE_WS_USER_TIMEZONE=America/Maceio
+
+MOODLE_WS_ROLE_SHORTNAME=w3soft_ws_integration
+MOODLE_WS_TOKEN_FILE=/var/www/moodledata/w3soft/ws-token.txt
+MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAME=student
+```
+
+Defaults aplicados pelo entrypoint:
+
+- `MOODLE_AUTO_BOOTSTRAP=1`
+- `MOODLE_DATAROOT=/var/www/moodledata`
+- `MOODLE_ADMIN_USER=admin`
+- `MOODLE_ADMIN_FORCE_PASSWORD_CHANGE_ON_INSTALL=1`
+- `MOODLE_WS_SERVICE_NAME=W3Soft Student Sync`
+- `MOODLE_WS_SERVICE_SHORTNAME=w3soft_student_sync`
+- `MOODLE_WS_FUNCTIONS=core_webservice_get_site_info,core_course_get_courses,core_course_get_courses_by_field,core_user_get_users_by_field,core_user_create_users,enrol_manual_enrol_users`
+- `MOODLE_WS_ROLE_SHORTNAME=w3soft_ws_integration`
+- `MOODLE_WS_TOKEN_FILE=/var/www/moodledata/w3soft/ws-token.txt`
+- `MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAME=student`
+
+Variaveis de reset opcionais:
+
+- `MOODLE_ADMIN_RESET_PASSWORD=1`: troca a senha do admin em uma instalacao ja existente.
+- `MOODLE_WS_USER_RESET_PASSWORD=1`: troca a senha do usuario tecnico em uma instalacao ja existente.
+- `MOODLE_WS_EXTRA_CAPABILITIES`: lista CSV de capacidades adicionais para o papel tecnico.
+- `MOODLE_WS_TOKEN_VALID_UNTIL`: timestamp Unix opcional de expiracao do token.
+- `MOODLE_WS_TOKEN_IP_RESTRICTION`: restricao de IP opcional do token.
+- `MOODLE_WS_USER_IP_RESTRICTION`: restricao de IP opcional da autorizacao do usuario no servico.
+
+O token gerado ou reutilizado nao aparece nos logs. Ele e gravado em `MOODLE_WS_TOKEN_FILE` com permissao `0600`. Em ambiente local, leia o token dentro do container ou monte um caminho especifico para coleta pelo provisionador externo.
+
+Como `docker-compose.instituicoes.yml` referencia a imagem pronta, reconstrua a tag usada pelas instituicoes antes de recriar os containers:
+
+```sh
+docker build -t w3soft/moodle:2026.06.1-local ./moodle
+docker compose -f docker-compose.infra.yml up -d
+docker compose -f docker-compose.instituicoes.yml up -d
+```
+
+Exemplo de leitura local:
+
+```sh
+docker exec moodle_escola_e sh -c 'cat /var/www/moodledata/w3soft/ws-token.txt'
+```
+
+Teste rapido da API REST:
+
+```sh
+TOKEN="$(docker exec moodle_escola_e sh -c 'cat /var/www/moodledata/w3soft/ws-token.txt')"
+curl -s "http://localhost:8088/i/escola-e/webservice/rest/server.php?wstoken=${TOKEN}&wsfunction=core_webservice_get_site_info&moodlewsrestformat=json"
+```
+
+Para validar idempotencia, reinicie o container e confirme que:
+
+- a instalacao do banco e pulada;
+- o servico externo nao e duplicado;
+- o usuario tecnico nao e duplicado;
+- o token ativo e reutilizado;
+- o arquivo de token permanece no mesmo caminho.
 
 ## Resultado esperado
 

@@ -79,6 +79,45 @@ services:
     cpus: "1.0"
     mem_limit: 1.5g
     mem_reservation: 512m
+  moodle_escola_g:
+    image: w3soft/moodle:2026.06.1-local
+    container_name: moodle_escola_g
+    restart: unless-stopped
+    env_file:
+      - ./secrets/escola-g.local.env
+    volumes:
+      - moodledata_escola_g:/var/www/moodledata
+    networks:
+      - moodle_net
+    cpus: "1.0"
+    mem_limit: 1.5g
+    mem_reservation: 512m
+  moodle_escola_h:
+    image: w3soft/moodle:2026.06.1-local
+    container_name: moodle_escola_h
+    restart: unless-stopped
+    env_file:
+      - ./secrets/escola-h.local.env
+    volumes:
+      - moodledata_escola_h:/var/www/moodledata
+    networks:
+      - moodle_net
+    cpus: "1.0"
+    mem_limit: 1.5g
+    mem_reservation: 512m
+  moodle_escola_i:
+    image: w3soft/moodle:2026.06.1-local
+    container_name: moodle_escola_i
+    restart: unless-stopped
+    env_file:
+      - ./secrets/escola-i.local.env
+    volumes:
+      - moodledata_escola_i:/var/www/moodledata
+    networks:
+      - moodle_net
+    cpus: "1.0"
+    mem_limit: 1.5g
+    mem_reservation: 512m
 volumes:
   moodledata_escola_a:
     name: moodledata_escola_a
@@ -93,6 +132,12 @@ volumes:
     name: moodledata_escola_e
   moodledata_escola_f:
     name: moodledata_escola_f
+  moodledata_escola_g:
+    name: moodledata_escola_g
+  moodledata_escola_h:
+    name: moodledata_escola_h
+  moodledata_escola_i:
+    name: moodledata_escola_i
 networks:
   moodle_net:
     external: true

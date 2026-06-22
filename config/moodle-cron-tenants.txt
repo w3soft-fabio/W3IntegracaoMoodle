@@ -7,3 +7,6 @@ moodle_escola_c
 moodle_escola_d
 moodle_escola_e
 moodle_escola_f
+moodle_escola_g
+moodle_escola_h
+moodle_escola_i

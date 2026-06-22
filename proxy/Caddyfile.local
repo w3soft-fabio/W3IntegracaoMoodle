@@ -8,6 +8,9 @@
 	@tenantescolad path /i/escola-d/*
 	@tenantescolae path /i/escola-e/*
 	@tenantescolaf path /i/escola-f/*
+	@tenantescolag path /i/escola-g/*
+	@tenantescolah path /i/escola-h/*
+	@tenantescolai path /i/escola-i/*
 	redir @home /index.html
 
 	redir /i/escola-a /i/escola-a/
@@ -17,6 +20,9 @@
 	redir /i/escola-d /i/escola-d/
 	redir /i/escola-e /i/escola-e/
 	redir /i/escola-f /i/escola-f/
+	redir /i/escola-g /i/escola-g/
+	redir /i/escola-h /i/escola-h/
+	redir /i/escola-i /i/escola-i/
 	handle @index {
 		root * /srv
 		file_server
@@ -44,6 +50,18 @@
 
 	handle @tenantescolaf {
 		reverse_proxy moodle_escola_f:80
+	}
+
+	handle @tenantescolag {
+		reverse_proxy moodle_escola_g:80
+	}
+
+	handle @tenantescolah {
+		reverse_proxy moodle_escola_h:80
+	}
+
+	handle @tenantescolai {
+		reverse_proxy moodle_escola_i:80
 	}
 
 	respond "Proxy local da infraestrutura Moodle funcionando" 200

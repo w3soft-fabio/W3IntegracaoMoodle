@@ -621,6 +621,12 @@ Evitar no inicio:
 
 A imagem Moodle passa a executar um bootstrap idempotente antes de iniciar o Apache. Esse bootstrap elimina o assistente inicial no navegador e usa somente CLI/PHP interno do Moodle.
 
+Documentacao operacional detalhada:
+
+```text
+docs/bootstrap-automatico-instituicoes.md
+```
+
 Fluxo executado por container:
 
 1. Validar variaveis obrigatorias.

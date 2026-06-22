@@ -40,6 +40,7 @@ run_as_www_data() {
 
 mariadb_query() {
     mariadb \
+        --ssl=0 \
         -h "$MOODLE_DB_HOST" \
         -u "$MOODLE_DB_USER" \
         "-p$MOODLE_DB_PASSWORD" \
@@ -103,8 +104,8 @@ configure_public_path() {
         esac
 
         cat > /etc/apache2/conf-enabled/moodle-public-path.conf <<EOF
-Alias ${public_path} /var/www/html
 Alias ${public_path}/ /var/www/html/
+Alias ${public_path} /var/www/html
 
 <Directory /var/www/html>
     Options FollowSymLinks

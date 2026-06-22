@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f02ff">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Rota nao encontrada ou nao autorizada na plataforma W3Soft.">
+
+  <title>401 | Recurso indisponivel - W3Soft</title>
+
+  <style>
+    :root {
+      --brand-950: #09005f;
+      --brand-900: #0b008c;
+      --brand-800: #0d00bd;
+      --brand-700: #0f02ff;
+      --brand-600: #3228ff;
+      --brand-500: #534cff;
+      --brand-200: #c9c7ff;
+      --brand-100: #e8e7ff;
+      --brand-50: #f5f5ff;
+
+      --cyan-500: #17c7e8;
+      --cyan-100: #dcf8fd;
+      --violet-500: #7b61ff;
+
+      --ink-950: #0a1020;
+      --ink-900: #11182a;
+      --ink-800: #1d2639;
+      --ink-700: #33405a;
+      --ink-600: #56627a;
+      --ink-500: #748096;
+      --ink-200: #dfe3eb;
+      --ink-100: #edf0f5;
+      --ink-50: #f8f9fc;
+      --white: #ffffff;
+
+      --container: 1120px;
+      --shadow-sm: 0 8px 24px rgba(12, 18, 38, 0.07);
+      --shadow-md: 0 20px 48px rgba(12, 18, 38, 0.12);
+      --shadow-brand: 0 20px 46px rgba(15, 2, 255, 0.22);
+      --transition: 180ms ease;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--ink-800);
+      background:
+        radial-gradient(circle at 78% 14%, rgba(23, 199, 232, 0.18), transparent 28%),
+        radial-gradient(circle at 12% 18%, rgba(83, 76, 255, 0.14), transparent 26%),
+        linear-gradient(180deg, #f8f8ff 0%, #ffffff 70%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      content: "";
+      opacity: 0.34;
+      background-image:
+        linear-gradient(rgba(15, 2, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15, 2, 255, 0.045) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, black 0%, transparent 82%);
+    }
+
+    img,
+    svg {
+      display: block;
+      max-width: 100%;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    h1,
+    p {
+      margin-top: 0;
+    }
+
+    ::selection {
+      color: var(--white);
+      background: var(--brand-700);
+    }
+
+    :focus-visible {
+      outline: 3px solid rgba(23, 199, 232, 0.75);
+      outline-offset: 3px;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      min-height: 100vh;
+      padding: 28px 0;
+    }
+
+    .container {
+      width: min(calc(100% - 40px), var(--container));
+      margin-inline: auto;
+    }
+
+    .site-header {
+      align-self: start;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .brand__mark {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      overflow: hidden;
+      place-items: center;
+      background: var(--brand-700);
+      border: 1px solid rgba(15, 2, 255, 0.16);
+      border-radius: 13px;
+      box-shadow: 0 8px 18px rgba(15, 2, 255, 0.18);
+    }
+
+    .brand__mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .brand__fallback {
+      display: none;
+      color: var(--white);
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: -0.06em;
+    }
+
+    .brand__text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.05;
+    }
+
+    .brand__name {
+      color: var(--ink-950);
+      font-size: 1.08rem;
+      font-weight: 830;
+      letter-spacing: -0.035em;
+    }
+
+    .brand__tagline {
+      margin-top: 4px;
+      color: var(--ink-500);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .error-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(390px, 0.85fr);
+      align-items: center;
+      gap: 62px;
+      padding: 76px 0 88px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      padding: 8px 12px;
+      color: var(--brand-700);
+      background: rgba(15, 2, 255, 0.08);
+      border: 1px solid rgba(15, 2, 255, 0.13);
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 750;
+    }
+
+    .badge__dot {
+      width: 8px;
+      height: 8px;
+      background: var(--cyan-500);
+      border-radius: 50%;
+      box-shadow: 0 0 0 5px rgba(23, 199, 232, 0.13);
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 18px;
+      color: var(--brand-700);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .kicker::before {
+      width: 24px;
+      height: 2px;
+      content: "";
+      background: currentColor;
+      border-radius: 99px;
+    }
+
+    h1 {
+      max-width: 780px;
+      margin-bottom: 24px;
+      color: var(--ink-950);
+      font-size: clamp(2.55rem, 5.3vw, 5rem);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+    }
+
+    .text-gradient {
+      color: transparent;
+      background: linear-gradient(110deg, var(--brand-700), var(--violet-500) 58%, #009ec4);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .lead {
+      max-width: 640px;
+      margin-bottom: 30px;
+      color: var(--ink-600);
+      font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+      line-height: 1.72;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      position: relative;
+      display: inline-flex;
+      min-height: 52px;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 0 22px;
+      color: var(--ink-900);
+      background: var(--white);
+      border: 1px solid var(--ink-200);
+      border-radius: 13px;
+      cursor: pointer;
+      font-size: 0.94rem;
+      font-weight: 750;
+      line-height: 1;
+      box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+      transition:
+        transform var(--transition),
+        box-shadow var(--transition),
+        border-color var(--transition),
+        background-color var(--transition),
+        color var(--transition);
+    }
+
+    .btn:hover {
+      border-color: var(--brand-200);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn:active {
+      transform: translateY(0) scale(0.985);
+    }
+
+    .btn--primary {
+      color: var(--white);
+      background: linear-gradient(135deg, var(--brand-700), var(--brand-600));
+      border-color: transparent;
+      box-shadow: 0 12px 26px rgba(15, 2, 255, 0.26);
+    }
+
+    .btn--primary:hover {
+      color: var(--white);
+      background: linear-gradient(135deg, var(--brand-800), var(--brand-700));
+      border-color: transparent;
+      box-shadow: 0 16px 34px rgba(15, 2, 255, 0.32);
+    }
+
+    .btn svg {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+    }
+
+    .support-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      color: var(--ink-600);
+      font-size: 0.9rem;
+      font-weight: 660;
+    }
+
+    .support-list span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .support-list svg {
+      width: 18px;
+      height: 18px;
+      color: var(--brand-700);
+    }
+
+    .visual {
+      position: relative;
+      min-height: 460px;
+    }
+
+    .visual__glow {
+      position: absolute;
+      inset: 8% 2% 3% 9%;
+      background: linear-gradient(135deg, rgba(15, 2, 255, 0.22), rgba(23, 199, 232, 0.14));
+      border-radius: 42px;
+      filter: blur(45px);
+    }
+
+    .status-panel {
+      position: relative;
+      overflow: hidden;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(223, 227, 235, 0.92);
+      border-radius: 25px;
+      box-shadow: 0 35px 75px rgba(16, 23, 47, 0.18);
+      backdrop-filter: blur(18px);
+    }
+
+    .status-panel__bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin: -24px -24px 22px;
+      padding: 15px 18px;
+      background: #fbfbfe;
+      border-bottom: 1px solid var(--ink-100);
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .window-dots span {
+      width: 8px;
+      height: 8px;
+      background: var(--ink-200);
+      border-radius: 50%;
+    }
+
+    .status-code {
+      color: var(--brand-700);
+      font-size: 0.82rem;
+      font-weight: 850;
+      letter-spacing: 0.12em;
+    }
+
+    .status-card {
+      padding: 22px;
+      background: var(--ink-50);
+      border: 1px solid var(--ink-100);
+      border-radius: 18px;
+    }
+
+    .status-icon {
+      display: grid;
+      width: 58px;
+      height: 58px;
+      margin-bottom: 22px;
+      place-items: center;
+      color: var(--white);
+      background: linear-gradient(135deg, var(--brand-700), var(--cyan-500));
+      border-radius: 16px;
+      box-shadow: var(--shadow-brand);
+    }
+
+    .status-icon svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    .status-card strong {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--ink-950);
+      font-size: 1.08rem;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+    }
+
+    .status-card p {
+      margin-bottom: 0;
+      color: var(--ink-600);
+      font-size: 0.95rem;
+    }
+
+    .route-lines {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .route-line {
+      display: grid;
+      grid-template-columns: 38px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: var(--white);
+      border: 1px solid var(--ink-100);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(10, 16, 32, 0.035);
+    }
+
+    .route-line__icon {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      color: var(--brand-700);
+      background: var(--brand-50);
+      border: 1px solid var(--brand-100);
+      border-radius: 11px;
+    }
+
+    .route-line__icon svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    .route-line span {
+      min-width: 0;
+      color: var(--ink-700);
+      font-size: 0.86rem;
+      font-weight: 720;
+      overflow-wrap: anywhere;
+    }
+
+    .route-line em {
+      color: var(--brand-700);
+      font-size: 0.7rem;
+      font-style: normal;
+      font-weight: 820;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .site-footer {
+      align-self: end;
+      padding-top: 22px;
+      color: var(--ink-500);
+      border-top: 1px solid rgba(223, 227, 235, 0.78);
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 940px) {
+      .error-layout {
+        grid-template-columns: 1fr;
+        gap: 42px;
+        padding: 62px 0 72px;
+      }
+
+      .visual {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page {
+        padding: 22px 0;
+      }
+
+      .container {
+        width: min(calc(100% - 32px), var(--container));
+      }
+
+      .brand__mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+      }
+
+      .brand__name {
+        font-size: 1rem;
+      }
+
+      .error-layout {
+        padding: 48px 0 58px;
+      }
+
+      h1 {
+        font-size: clamp(2.35rem, 12vw, 3.45rem);
+      }
+
+      .actions {
+        display: grid;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .status-panel {
+        padding: 18px;
+        border-radius: 21px;
+      }
+
+      .status-panel__bar {
+        margin: -18px -18px 18px;
+      }
+
+      .status-card {
+        padding: 18px;
+      }
+
+      .route-line {
+        grid-template-columns: 34px 1fr;
+      }
+
+      .route-line em {
+        grid-column: 2;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/index.html" aria-label="W3Soft - voltar ao inicio">
+          <span class="brand__mark">
+            <img
+              src="https://w3soft.com.br/img/logow3/logow3.png"
+              alt="Logotipo oficial da W3Soft"
+              width="44"
+              height="44"
+              id="brandLogo"
+            >
+            <span class="brand__fallback" aria-hidden="true">W3</span>
+          </span>
+          <span class="brand__text">
+            <span class="brand__name">W3Soft</span>
+            <span class="brand__tagline">Plataforma de ensino</span>
+          </span>
+        </a>
+      </div>
+    </header>
+
+    <main class="container error-layout" id="conteudo-principal">
+      <section aria-labelledby="error-title">
+        <div class="badge">
+          <span class="badge__dot" aria-hidden="true"></span>
+          Rota indisponivel
+        </div>
+        <div class="kicker">Erro 401</div>
+        <h1 id="error-title">Nao encontramos uma rota autorizada para este <span class="text-gradient">recurso</span>.</h1>
+        <p class="lead">O endereco acessado nao corresponde a uma escola, pagina ou recurso ativo nesta instalacao. Volte para a entrada principal da plataforma ou confira se o link recebido esta completo.</p>
+
+        <div class="actions" aria-label="Acoes para continuar navegando">
+          <a class="btn btn--primary" href="/index.html">
+            Voltar ao inicio
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"></path></svg>
+          </a>
+          <a class="btn" href="https://w3soft.com.br/site-w3soft.html" target="_blank" rel="noopener noreferrer">
+            Conhecer a W3Soft
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg>
+          </a>
+        </div>
+
+        <div class="support-list" aria-label="Dicas de verificacao">
+          <span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"></path></svg>
+            confira o endereco
+          </span>
+          <span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"></path></svg>
+            acesse uma escola ativa
+          </span>
+        </div>
+      </section>
+
+      <aside class="visual" aria-label="Resumo do erro">
+        <div class="visual__glow" aria-hidden="true"></div>
+        <div class="status-panel">
+          <div class="status-panel__bar">
+            <div class="window-dots" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <span class="status-code">HTTP 401</span>
+          </div>
+
+          <div class="status-card">
+            <div class="status-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <strong>O proxy recebeu a requisicao, mas nao encontrou destino autorizado.</strong>
+            <p>As rotas cadastradas continuam protegidas e os demais caminhos sao direcionados para esta pagina.</p>
+
+            <div class="route-lines">
+              <div class="route-line">
+                <span class="route-line__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18"></path><path d="m15 6 6 6-6 6"></path></svg>
+                </span>
+                <span>/i/escola-a/</span>
+                <em>ativa</em>
+              </div>
+              <div class="route-line">
+                <span class="route-line__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"></path><path d="M12 17h.01"></path><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"></path></svg>
+                </span>
+                <span>rota solicitada</span>
+                <em>401</em>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="container site-footer">
+      <span>W3Soft. Plataforma de ensino on-line.</span>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const image = document.getElementById('brandLogo');
+      image?.addEventListener('error', () => {
+        image.style.display = 'none';
+        const fallback = image.nextElementSibling;
+        if (fallback) fallback.style.display = 'block';
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 :80 {
 	@home path /
 	@index path /index.html
+	@unauthorizedPage path /401.html
 	@a path /i/escola-a/*
 	@b path /i/escola-b/*
 	@c path /i/escola-c/*
@@ -30,6 +31,11 @@
 	redir /i/escola-k /i/escola-k/
 	redir /i/escola-l /i/escola-l/
 	handle @index {
+		root * /srv
+		file_server
+	}
+
+	handle @unauthorizedPage {
 		root * /srv
 		file_server
 	}
@@ -82,5 +88,11 @@
 		reverse_proxy moodle_escola_l:80
 	}
 
-	respond "Proxy local da infraestrutura Moodle funcionando" 200
+	handle {
+		root * /srv
+		rewrite * /401.html
+		file_server {
+			status 401
+		}
+	}
 }

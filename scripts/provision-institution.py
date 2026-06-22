@@ -273,7 +273,18 @@ def upsert_caddy(spec: dict, dry_run: bool) -> None:
 		reverse_proxy {service}:80
 	}}
 """
-        content = content.replace("\n\trespond \"Proxy local da infraestrutura Moodle funcionando\" 200", handle + "\n\trespond \"Proxy local da infraestrutura Moodle funcionando\" 200")
+        fallback = """
+	handle {
+		root * /srv
+		rewrite * /401.html
+		file_server {
+			status 401
+		}
+	}
+"""
+        if fallback not in content:
+            fail("Caddy fallback 401 block not found.")
+        content = content.replace(fallback, handle + fallback)
 
     if dry_run:
         print(f"DRY-RUN: would update {CADDY_FILE.relative_to(ROOT)}")

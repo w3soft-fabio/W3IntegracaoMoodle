@@ -15,6 +15,9 @@
 	@tenantescolaj path /i/escola-j/*
 	@tenantescolak path /i/escola-k/*
 	@tenantescolal path /i/escola-l/*
+	@tenantescolaa path /i/escola-a/*
+	@tenantescolab path /i/escola-b/*
+	@tenantescolac path /i/escola-c/*
 	redir @home /index.html
 
 	redir /i/escola-a /i/escola-a/
@@ -86,6 +89,18 @@
 
 	handle @tenantescolal {
 		reverse_proxy moodle_escola_l:80
+	}
+
+	handle @tenantescolaa {
+		reverse_proxy moodle_escola_a:80
+	}
+
+	handle @tenantescolab {
+		reverse_proxy moodle_escola_b:80
+	}
+
+	handle @tenantescolac {
+		reverse_proxy moodle_escola_c:80
 	}
 
 	handle {

@@ -18,6 +18,7 @@
 	@tenantescolaa path /i/escola-a/*
 	@tenantescolab path /i/escola-b/*
 	@tenantescolac path /i/escola-c/*
+	@tenantescolam path /i/escola-m/*
 	redir @home /index.html
 
 	redir /i/escola-a /i/escola-a/
@@ -33,6 +34,7 @@
 	redir /i/escola-j /i/escola-j/
 	redir /i/escola-k /i/escola-k/
 	redir /i/escola-l /i/escola-l/
+	redir /i/escola-m /i/escola-m/
 	handle @index {
 		root * /srv
 		file_server
@@ -101,6 +103,10 @@
 
 	handle @tenantescolac {
 		reverse_proxy moodle_escola_c:80
+	}
+
+	handle @tenantescolam {
+		reverse_proxy moodle_escola_m:80
 	}
 
 	handle {

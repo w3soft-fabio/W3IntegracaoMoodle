@@ -186,7 +186,8 @@ def default_env(spec: dict) -> dict:
         "MOODLE_WS_SERVICE_SHORTNAME": "w3soft_student_sync",
         "MOODLE_WS_FUNCTIONS": (
             "core_webservice_get_site_info,core_course_get_courses,"
-            "core_course_get_courses_by_field,core_user_get_users_by_field,"
+            "core_course_get_courses_by_field,core_course_create_courses,"
+            "core_course_update_courses,core_user_get_users_by_field,"
             "core_user_create_users,enrol_manual_enrol_users"
         ),
         "MOODLE_WS_USER_USERNAME": "svc_integracao",

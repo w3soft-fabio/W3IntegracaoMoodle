@@ -293,13 +293,15 @@ function ensure_ws_role(stdClass $wsuser): int {
     // global do Moodle, nao dentro de um curso especifico.
     set_role_contextlevels($roleid, [CONTEXT_SYSTEM]);
 
-    // Capacidades minimas para consultar cursos/usuarios, criar usuarios e
+    // Capacidades minimas para consultar/criar cursos, criar usuarios e
     // realizar matriculas manuais via webservice.
     $capabilities = [
         'webservice/rest:use',
         'moodle/webservice:createtoken',
         'moodle/course:view',
         'moodle/course:viewhiddencourses',
+        'moodle/course:create',
+        'moodle/course:update',
         'moodle/user:create',
         'moodle/user:viewdetails',
         'moodle/user:viewhiddendetails',
@@ -476,7 +478,7 @@ $admin = update_admin_user($firstinstall);
 ensure_webservice_settings();
 // Lista de funcoes REST que farao parte do servico externo. Pode vir do
 // ambiente ou cair no conjunto padrao usado pela integracao.
-$functions = split_csv(env_default('MOODLE_WS_FUNCTIONS', 'core_webservice_get_site_info,core_course_get_courses,core_course_get_courses_by_field,core_user_get_users_by_field,core_user_create_users,enrol_manual_enrol_users'));
+$functions = split_csv(env_default('MOODLE_WS_FUNCTIONS', 'core_webservice_get_site_info,core_course_get_courses,core_course_get_courses_by_field,core_course_create_courses,core_course_update_courses,core_user_get_users_by_field,core_user_create_users,enrol_manual_enrol_users'));
 $service = ensure_service($functions);
 $wsuser = ensure_ws_user();
 ensure_ws_role($wsuser);

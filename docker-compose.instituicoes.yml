@@ -196,6 +196,19 @@ services:
     cpus: "1.0"
     mem_limit: 1.5g
     mem_reservation: 512m
+  moodle_escola_p:
+    image: w3soft/moodle:2026.06.1-local
+    container_name: moodle_escola_p
+    restart: unless-stopped
+    env_file:
+      - ./secrets/escola-p.local.env
+    volumes:
+      - moodledata_escola_p:/var/www/moodledata
+    networks:
+      - moodle_net
+    cpus: "1.0"
+    mem_limit: 1.5g
+    mem_reservation: 512m
 volumes:
   moodledata_escola_a:
     name: moodledata_escola_a
@@ -228,6 +241,8 @@ volumes:
     name: moodledata_escola_o
   moodledata_escola_z:
     name: moodledata_escola_z
+  moodledata_escola_p:
+    name: moodledata_escola_p
 networks:
   moodle_net:
     external: true

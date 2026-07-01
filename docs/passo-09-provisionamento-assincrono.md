@@ -523,7 +523,7 @@ Exemplo:
 ```yaml
 services:
   moodle_escola_modelo:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_modelo
     restart: unless-stopped
     env_file:

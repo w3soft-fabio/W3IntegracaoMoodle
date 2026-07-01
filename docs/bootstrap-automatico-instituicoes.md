@@ -128,7 +128,7 @@ Ele atualiza, de forma idempotente:
 Opcionalmente, tambem:
 
 - cria ou atualiza o banco e usuario MariaDB;
-- rebuilda a imagem `w3soft/moodle:2026.06.1-local`;
+- rebuilda a imagem `w3soft/moodle:2026.07.1-local`;
 - sobe o container da instituicao;
 - reinicia o proxy Caddy.
 

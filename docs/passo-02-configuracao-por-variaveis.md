@@ -91,7 +91,7 @@ Se `config.php` ler variaveis, a mesma imagem pode atender varios containers:
 
 ```text
 Mesma imagem:
-  w3soft/moodle:2026.06.1-local
+  w3soft/moodle:2026.07.1-local
 
 Containers diferentes:
   moodle_app
@@ -568,7 +568,7 @@ O servico `moodle` deve ficar parecido com:
 
 ```yaml
   moodle:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     build:
       context: ./moodle
     container_name: moodle_app
@@ -597,7 +597,7 @@ O servico `cron` deve ficar parecido com:
 
 ```yaml
   cron:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_cron
     restart: unless-stopped
     env_file:
@@ -653,7 +653,7 @@ Execute:
 docker compose build moodle
 ```
 
-Resultado esperado: o Docker deve construir novamente a imagem `w3soft/moodle:2026.06.1-local`.
+Resultado esperado: o Docker deve construir novamente a imagem `w3soft/moodle:2026.07.1-local`.
 
 Se quiser forcar rebuild sem cache:
 
@@ -982,14 +982,14 @@ E o Compose poderia ter:
 ```yaml
 services:
   moodle_escola_a:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     env_file:
       - ./secrets/escola-a.env
     volumes:
       - moodledata_escola_a:/var/www/moodledata
 
   moodle_escola_b:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     env_file:
       - ./secrets/escola-b.env
     volumes:

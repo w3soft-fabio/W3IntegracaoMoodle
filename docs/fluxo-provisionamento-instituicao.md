@@ -40,7 +40,7 @@ Componentes compartilhados:
 - `moodle_redis`: Redis unico, separado por prefixo por instituicao.
 - `moodle_proxy`: Caddy unico, responsavel por rotear cada `/i/{slug}`.
 - `moodle_net`: rede Docker bridge compartilhada.
-- imagem Docker `w3soft/moodle:2026.06.1-local`.
+- imagem Docker `w3soft/moodle:2026.07.1-local`.
 
 Componentes por instituicao:
 
@@ -136,7 +136,7 @@ Flags importantes:
 
 - `--dry-run`: imprime o que faria, mas nao grava arquivos nem executa Docker.
 - `--create-db`: cria/atualiza banco e usuario da instituicao no MariaDB.
-- `--rebuild-image`: reconstrui a imagem local `w3soft/moodle:2026.06.1-local`.
+- `--rebuild-image`: reconstrui a imagem local `w3soft/moodle:2026.07.1-local`.
 - `--up`: sobe o container da instituicao e reinicia o proxy.
 - `--apply-all`: combina atualizacao de arquivos, banco, build da imagem e start.
 
@@ -148,7 +148,7 @@ atualizar proxy/Caddyfile.local
 atualizar config/moodle-cron-tenants.txt
 gerar secrets/escola-i.local.env
 executar SQL no container moodle_db
-buildar imagem w3soft/moodle:2026.06.1-local
+buildar imagem w3soft/moodle:2026.07.1-local
 subir servico moodle_escola_i
 reiniciar proxy Caddy
 ```
@@ -165,7 +165,7 @@ COMPOSE_FILE                 docker-compose.instituicoes.yml
 CADDY_FILE                   proxy/Caddyfile.local
 CRON_TENANTS_FILE            config/moodle-cron-tenants.txt
 SECRETS_DIR                  secrets
-IMAGE_TAG                    w3soft/moodle:2026.06.1-local
+IMAGE_TAG                    w3soft/moodle:2026.07.1-local
 ```
 
 Fluxo principal da funcao `main()`:
@@ -250,7 +250,7 @@ Para `escola-i`, o script garante que exista um servico parecido com:
 ```yaml
 services:
   moodle_escola_i:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_i
     restart: unless-stopped
     env_file:
@@ -504,7 +504,7 @@ Funcao:
 - parte de `php:8.3-apache`;
 - instala dependencias do sistema;
 - instala extensoes PHP necessarias ao Moodle;
-- clona o Moodle `MOODLE_405_STABLE`;
+- clona o Moodle `MOODLE_500_STABLE`;
 - baixa o pacote de idioma `pt_br`;
 - copia arquivos customizados do projeto.
 
@@ -520,7 +520,7 @@ moodle/docker-entrypoint.sh            -> /usr/local/bin/moodle-entrypoint
 O script usa esse Dockerfile quando executa:
 
 ```sh
-docker build -t w3soft/moodle:2026.06.1-local ./moodle
+docker build -t w3soft/moodle:2026.07.1-local ./moodle
 ```
 
 ### `moodle/config.php`
@@ -903,7 +903,7 @@ Esse comando:
 ### Build da imagem
 
 ```sh
-docker build -t w3soft/moodle:2026.06.1-local ./moodle
+docker build -t w3soft/moodle:2026.07.1-local ./moodle
 ```
 
 Esse comando precisa ser executado quando arquivos da imagem mudam, por exemplo:
@@ -949,7 +949,7 @@ scripts/provision-institution.py tmp/escola-i.json --apply-all
    - aplica grants
 
 4. Python builda imagem Moodle
-   - docker build -t w3soft/moodle:2026.06.1-local ./moodle
+   - docker build -t w3soft/moodle:2026.07.1-local ./moodle
 
 5. Python sobe container
    - docker compose -f docker-compose.instituicoes.yml up -d moodle_escola_i
@@ -996,7 +996,7 @@ No Docker:
 ```text
 container moodle_escola_i
 volume moodledata_escola_i
-imagem w3soft/moodle:2026.06.1-local
+imagem w3soft/moodle:2026.07.1-local
 rota Caddy ativa no container moodle_proxy
 ```
 
@@ -1241,7 +1241,7 @@ Causa:
 Correcao:
 
 ```sh
-docker build -t w3soft/moodle:2026.06.1-local ./moodle
+docker build -t w3soft/moodle:2026.07.1-local ./moodle
 docker compose -f docker-compose.instituicoes.yml up -d --force-recreate moodle_escola_i
 ```
 

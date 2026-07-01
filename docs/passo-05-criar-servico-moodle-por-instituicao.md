@@ -118,7 +118,7 @@ Exemplo:
 
 ```text
 Imagem:
-  w3soft/moodle:2026.06.1-local
+  w3soft/moodle:2026.07.1-local
 
 Containers:
   moodle_escola_a
@@ -411,7 +411,7 @@ Abra o arquivo no seu editor preferido e adicione este conteudo:
 ```yaml
 services:
   moodle_escola_a:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_a
     restart: unless-stopped
     env_file:
@@ -425,7 +425,7 @@ services:
     mem_reservation: 512m
 
   moodle_escola_b:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_b
     restart: unless-stopped
     env_file:
@@ -455,7 +455,7 @@ Se quiser criar o arquivo pelo terminal, use:
 cat > docker-compose.instituicoes.yml <<'YAML'
 services:
   moodle_escola_a:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_a
     restart: unless-stopped
     env_file:
@@ -469,7 +469,7 @@ services:
     mem_reservation: 512m
 
   moodle_escola_b:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_b
     restart: unless-stopped
     env_file:
@@ -518,7 +518,7 @@ Crie um container para a escola B.
 ### `image`
 
 ```yaml
-image: w3soft/moodle:2026.06.1-local
+image: w3soft/moodle:2026.07.1-local
 ```
 
 Os dois containers usam a mesma imagem.
@@ -1355,7 +1355,7 @@ Antes de considerar este passo concluido, confirme:
 - `docker compose -f docker-compose.instituicoes.yml config` nao mostra erro;
 - `moodle_escola_a` esta rodando;
 - `moodle_escola_b` esta rodando;
-- os dois containers usam a imagem `w3soft/moodle:2026.06.1-local`;
+- os dois containers usam a imagem `w3soft/moodle:2026.07.1-local`;
 - os dois containers estao na rede `moodle_net`;
 - a escola A usa `MOODLE_DB_NAME=moodle_escola_a`;
 - a escola B usa `MOODLE_DB_NAME=moodle_escola_b`;

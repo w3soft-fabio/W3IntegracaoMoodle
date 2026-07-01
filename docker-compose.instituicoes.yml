@@ -1,6 +1,6 @@
 services:
   moodle_escola_a:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_a
     restart: unless-stopped
     env_file:
@@ -14,7 +14,7 @@ services:
     mem_reservation: 512m
 
   moodle_escola_b:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_b
     restart: unless-stopped
     env_file:
@@ -28,7 +28,7 @@ services:
     mem_reservation: 512m
 
   moodle_escola_c:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_c
     restart: unless-stopped
     env_file:
@@ -41,7 +41,7 @@ services:
     mem_limit: 1.5g
     mem_reservation: 512m
   moodle_escola_d:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_d
     restart: unless-stopped
     env_file:
@@ -54,7 +54,7 @@ services:
     mem_limit: 1.5g
     mem_reservation: 512m
   moodle_escola_e:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_e
     restart: unless-stopped
     env_file:
@@ -67,7 +67,7 @@ services:
     mem_limit: 1.5g
     mem_reservation: 512m
   moodle_escola_f:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_f
     restart: unless-stopped
     env_file:
@@ -80,7 +80,7 @@ services:
     mem_limit: 1.5g
     mem_reservation: 512m
   moodle_escola_g:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_g
     restart: unless-stopped
     env_file:
@@ -93,7 +93,7 @@ services:
     mem_limit: 1.5g
     mem_reservation: 512m
   moodle_escola_h:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_h
     restart: unless-stopped
     env_file:
@@ -106,7 +106,7 @@ services:
     mem_limit: 1.5g
     mem_reservation: 512m
   moodle_escola_i:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_i
     restart: unless-stopped
     env_file:
@@ -119,7 +119,7 @@ services:
     mem_limit: 1.5g
     mem_reservation: 512m
   moodle_escola_j:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_j
     restart: unless-stopped
     env_file:
@@ -132,7 +132,7 @@ services:
     mem_limit: 1.5g
     mem_reservation: 512m
   moodle_escola_k:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_k
     restart: unless-stopped
     env_file:
@@ -145,7 +145,7 @@ services:
     mem_limit: 1.5g
     mem_reservation: 512m
   moodle_escola_l:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_l
     restart: unless-stopped
     env_file:
@@ -158,7 +158,7 @@ services:
     mem_limit: 1.5g
     mem_reservation: 512m
   moodle_escola_m:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_m
     restart: unless-stopped
     env_file:
@@ -171,7 +171,7 @@ services:
     mem_limit: 1.5g
     mem_reservation: 512m
   moodle_escola_o:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_o
     restart: unless-stopped
     env_file:
@@ -184,7 +184,7 @@ services:
     mem_limit: 1.5g
     mem_reservation: 512m
   moodle_escola_z:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_z
     restart: unless-stopped
     env_file:
@@ -197,7 +197,7 @@ services:
     mem_limit: 1.5g
     mem_reservation: 512m
   moodle_escola_p:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_escola_p
     restart: unless-stopped
     env_file:

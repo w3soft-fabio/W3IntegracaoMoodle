@@ -42,7 +42,7 @@ Ao implementar este passo localmente, voce vai praticar:
 Ao final deste passo:
 
 - o container `moodle_redis` estara rodando;
-- a imagem `w3soft/moodle:2026.06.1-local` tera a extensao PHP `redis`;
+- a imagem `w3soft/moodle:2026.07.1-local` tera a extensao PHP `redis`;
 - a imagem Moodle usara `moodle/docker-entrypoint.sh` como entrypoint;
 - o entrypoint configurara o Apache para servir o Moodle em subcaminhos como `/i/escola-a`;
 - o Caddy encaminhara `/i/escola-a/` para `moodle_escola_a` e `/i/escola-b/` para `moodle_escola_b`;
@@ -538,7 +538,7 @@ O que este comando faz:
 - instala a extensao `redis`;
 - copia `moodle/docker-entrypoint.sh` para `/usr/local/bin/moodle-entrypoint`;
 - define `moodle-entrypoint` como entrypoint da imagem;
-- recria a imagem `w3soft/moodle:2026.06.1-local`.
+- recria a imagem `w3soft/moodle:2026.07.1-local`.
 
 Se voce estiver usando apenas `docker-compose.instituicoes.yml`, confira se a imagem esperada existe:
 

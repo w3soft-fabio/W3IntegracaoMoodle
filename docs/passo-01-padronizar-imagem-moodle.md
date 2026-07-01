@@ -14,7 +14,7 @@ No `docker-compose.yml` atual, os dois servicos fazem `build: ./moodle`. Isso fu
 Apos este passo, a ideia sera trabalhar com uma imagem nomeada e versionada, por exemplo:
 
 ```text
-w3soft/moodle:2026.06.1-local
+w3soft/moodle:2026.07.1-local
 ```
 
 Essa imagem sera usada por todos os containers Moodle, inclusive futuramente por `moodle_escola_a`, `moodle_escola_b`, `moodle_escola_c` e assim por diante.
@@ -59,7 +59,7 @@ Exemplo futuro:
 
 ```text
 Imagem unica:
-  w3soft/moodle:2026.06.1-local
+  w3soft/moodle:2026.07.1-local
 
 Containers criados a partir dela:
   moodle_escola_a
@@ -74,7 +74,7 @@ Uma tag e uma versao nomeada de uma imagem.
 Exemplo:
 
 ```text
-w3soft/moodle:2026.06.1-local
+w3soft/moodle:2026.07.1-local
 ```
 
 Neste nome:
@@ -298,7 +298,7 @@ Para:
 
 ```yaml
   moodle:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     build:
       context: ./moodle
     container_name: moodle_app
@@ -316,7 +316,7 @@ Para:
 
 ```yaml
   cron:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_cron
 ```
 
@@ -324,7 +324,7 @@ O resultado importante e:
 
 - somente o servico `moodle` constroi a imagem;
 - o servico `cron` reutiliza a imagem ja criada;
-- ambos passam a usar `w3soft/moodle:2026.06.1-local`.
+- ambos passam a usar `w3soft/moodle:2026.07.1-local`.
 
 ## Etapa 8: Conferir o trecho final esperado do Compose
 
@@ -332,7 +332,7 @@ Depois da edicao, o trecho dos servicos `moodle` e `cron` deve ficar parecido co
 
 ```yaml
   moodle:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     build:
       context: ./moodle
     container_name: moodle_app
@@ -348,7 +348,7 @@ Depois da edicao, o trecho dos servicos `moodle` e `cron` deve ficar parecido co
       - moodle_net
 
   cron:
-    image: w3soft/moodle:2026.06.1-local
+    image: w3soft/moodle:2026.07.1-local
     container_name: moodle_cron
     restart: unless-stopped
     depends_on:
@@ -388,7 +388,7 @@ O que esse comando faz:
 - encontra o `build.context: ./moodle`;
 - executa o `moodle/Dockerfile`;
 - cria a imagem local;
-- aplica a tag `w3soft/moodle:2026.06.1-local`.
+- aplica a tag `w3soft/moodle:2026.07.1-local`.
 
 Se for a primeira execucao, pode demorar porque o Docker precisa baixar imagens base e pacotes.
 
@@ -414,7 +414,7 @@ Se a imagem aparecer nessa lista, o build funcionou.
 Execute:
 
 ```sh
-docker image inspect w3soft/moodle:2026.06.1-local
+docker image inspect w3soft/moodle:2026.07.1-local
 ```
 
 Esse comando mostra muitos detalhes em JSON, como:
@@ -441,7 +441,7 @@ Para aprender, voce pode buscar principalmente por:
 Execute:
 
 ```sh
-docker history w3soft/moodle:2026.06.1-local
+docker history w3soft/moodle:2026.07.1-local
 ```
 
 Esse comando mostra as camadas da imagem.
@@ -585,7 +585,7 @@ Ctrl + C
 Neste momento, o ponto principal e que `moodle` e `cron` estao usando a mesma imagem:
 
 ```text
-w3soft/moodle:2026.06.1-local
+w3soft/moodle:2026.07.1-local
 ```
 
 ## Etapa 19: Confirmar qual imagem cada container usa
@@ -599,7 +599,7 @@ docker inspect moodle_app --format '{{.Config.Image}}'
 Resultado esperado:
 
 ```text
-w3soft/moodle:2026.06.1-local
+w3soft/moodle:2026.07.1-local
 ```
 
 Agora confirme o cron:
@@ -611,7 +611,7 @@ docker inspect moodle_cron --format '{{.Config.Image}}'
 Resultado esperado:
 
 ```text
-w3soft/moodle:2026.06.1-local
+w3soft/moodle:2026.07.1-local
 ```
 
 Se os dois containers mostram a mesma imagem, este passo foi implementado corretamente.
@@ -657,13 +657,13 @@ Este teste ajuda a entender que voce pode criar outro container a partir da mesm
 Execute:
 
 ```sh
-docker run --rm w3soft/moodle:2026.06.1-local php -v
+docker run --rm w3soft/moodle:2026.07.1-local php -v
 ```
 
 O que esse comando faz:
 
 - cria um container temporario;
-- usa a imagem `w3soft/moodle:2026.06.1-local`;
+- usa a imagem `w3soft/moodle:2026.07.1-local`;
 - executa `php -v`;
 - remove o container ao terminar por causa do `--rm`.
 
@@ -676,7 +676,7 @@ PHP 8.3.x
 Agora confira os modulos PHP instalados:
 
 ```sh
-docker run --rm w3soft/moodle:2026.06.1-local php -m
+docker run --rm w3soft/moodle:2026.07.1-local php -m
 ```
 
 Voce deve ver extensoes como:
@@ -698,7 +698,7 @@ zip
 Execute:
 
 ```sh
-docker run --rm w3soft/moodle:2026.06.1-local php /var/www/html/admin/cli/checks.php
+docker run --rm w3soft/moodle:2026.07.1-local php /var/www/html/admin/cli/checks.php
 ```
 
 Esse comando executa um script CLI do Moodle dentro de um container temporario.
@@ -708,7 +708,7 @@ Dependendo do estado da configuracao e do banco, podem aparecer avisos. Neste pa
 Voce tambem pode listar o diretorio:
 
 ```sh
-docker run --rm w3soft/moodle:2026.06.1-local ls /var/www/html
+docker run --rm w3soft/moodle:2026.07.1-local ls /var/www/html
 ```
 
 Resultado esperado: varios arquivos e diretorios do Moodle, como:
@@ -789,7 +789,7 @@ Quando houver uma mudanca relevante, nao substitua silenciosamente a mesma tag.
 Por exemplo, a versao atual:
 
 ```text
-w3soft/moodle:2026.06.1-local
+w3soft/moodle:2026.07.1-local
 ```
 
 Uma proxima versao poderia ser:
@@ -830,7 +830,7 @@ Isso ajuda a testar uma versao nova sem perder a referencia da anterior.
 Se voce criou uma nova tag e quer voltar para a anterior, edite o Compose e retorne:
 
 ```yaml
-image: w3soft/moodle:2026.06.1-local
+image: w3soft/moodle:2026.07.1-local
 ```
 
 Depois recrie os containers:
@@ -911,8 +911,8 @@ docker inspect moodle_cron --format '{{.Config.Image}}'
 Resultados esperados:
 
 ```text
-moodle_app  -> w3soft/moodle:2026.06.1-local
-moodle_cron -> w3soft/moodle:2026.06.1-local
+moodle_app  -> w3soft/moodle:2026.07.1-local
+moodle_cron -> w3soft/moodle:2026.07.1-local
 ```
 
 ## Resultado esperado do Passo 1
@@ -953,7 +953,7 @@ moodle_escola_c
 Todos usando a mesma imagem:
 
 ```text
-w3soft/moodle:2026.06.1-local
+w3soft/moodle:2026.07.1-local
 ```
 
 O que muda por instituicao nao deve ser o codigo da imagem. O que muda por instituicao deve ser:
@@ -979,14 +979,14 @@ Marque cada item quando concluir:
 - [ ] Confirmei `docker compose version`.
 - [ ] Rodei `docker compose config`.
 - [ ] Fiz backup do `docker-compose.yml`.
-- [ ] Adicionei `image: w3soft/moodle:2026.06.1-local` no servico `moodle`.
+- [ ] Adicionei `image: w3soft/moodle:2026.07.1-local` no servico `moodle`.
 - [ ] Mantive `build.context: ./moodle` no servico `moodle`.
 - [ ] Troquei o servico `cron` para usar a mesma imagem.
 - [ ] Rodei `docker compose build moodle`.
 - [ ] Confirmei a imagem com `docker image ls w3soft/moodle`.
 - [ ] Subi `db`, `moodle` e `cron`.
-- [ ] Confirmei que `moodle_app` usa `w3soft/moodle:2026.06.1-local`.
-- [ ] Confirmei que `moodle_cron` usa `w3soft/moodle:2026.06.1-local`.
+- [ ] Confirmei que `moodle_app` usa `w3soft/moodle:2026.07.1-local`.
+- [ ] Confirmei que `moodle_cron` usa `w3soft/moodle:2026.07.1-local`.
 - [ ] Acessei `http://localhost:8080`.
 
 ## Proximo passo

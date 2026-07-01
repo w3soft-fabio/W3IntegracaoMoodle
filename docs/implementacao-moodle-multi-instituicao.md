@@ -703,7 +703,7 @@ O token gerado ou reutilizado nao aparece nos logs. Ele e gravado em `MOODLE_WS_
 Como `docker-compose.instituicoes.yml` referencia a imagem pronta, reconstrua a tag usada pelas instituicoes antes de recriar os containers:
 
 ```sh
-docker build -t w3soft/moodle:2026.06.1-local ./moodle
+docker build -t w3soft/moodle:2026.07.1-local ./moodle
 docker compose -f docker-compose.infra.yml up -d
 docker compose -f docker-compose.instituicoes.yml up -d
 ```

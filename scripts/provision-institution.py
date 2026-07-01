@@ -15,7 +15,7 @@ COMPOSE_FILE = ROOT / "docker-compose.instituicoes.yml"
 CADDY_FILE = ROOT / "proxy" / "Caddyfile.local"
 CRON_TENANTS_FILE = ROOT / "config" / "moodle-cron-tenants.txt"
 SECRETS_DIR = ROOT / "secrets"
-IMAGE_TAG = "w3soft/moodle:2026.06.1-local"
+IMAGE_TAG = "w3soft/moodle:2026.07.1-local"
 
 
 REQUIRED_FIELDS = [

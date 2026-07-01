@@ -32,8 +32,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN rm -rf /var/www/html/* \
-    && git clone --branch MOODLE_405_STABLE --depth 1 https://github.com/moodle/moodle.git /var/www/html \
-    && curl -fsSL "https://download.moodle.org/download.php/direct/langpack/4.5/pt_br.zip" -o /tmp/pt_br.zip \
+    && git clone --branch MOODLE_500_STABLE --depth 1 https://github.com/moodle/moodle.git /var/www/html \
+    && curl -fsSL "https://download.moodle.org/download.php/direct/langpack/5.0/pt_br.zip" -o /tmp/pt_br.zip \
     && unzip /tmp/pt_br.zip -d /var/www/html/lang \
     && rm /tmp/pt_br.zip \
     && mkdir -p /var/www/moodledata \

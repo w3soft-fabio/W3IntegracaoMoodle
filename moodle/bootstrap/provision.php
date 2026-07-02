@@ -71,6 +71,38 @@ function split_csv(string $value): array {
     return array_values(array_filter($items, static fn(string $item): bool => $item !== ''));
 }
 
+// Resolve a lista de funcoes de webservice. Com `*`, expande para todas as
+// funcoes externas disponiveis nesta instalacao do Moodle.
+function resolve_ws_functions(string $value): array {
+    global $DB;
+
+    if (trim($value) === '*') {
+        return $DB->get_fieldset_select(
+            'external_functions',
+            'name',
+            '1 = 1 ORDER BY name ASC'
+        );
+    }
+
+    return split_csv($value);
+}
+
+// Resolve capabilities extras do papel tecnico. Com `*`, expande para todas
+// as capabilities registradas nesta instalacao, incluindo plugins ativos.
+function resolve_ws_capabilities(string $value): array {
+    global $DB;
+
+    if (trim($value) === '*') {
+        return $DB->get_fieldset_select(
+            'capabilities',
+            'name',
+            '1 = 1 ORDER BY name ASC'
+        );
+    }
+
+    return split_csv($value);
+}
+
 // Atualiza os dados publicos do site Moodle, como nome completo, nome curto,
 // resumo, email de suporte e timezone padrao.
 function update_site_identity(): void {
@@ -313,7 +345,7 @@ function ensure_ws_role(stdClass $wsuser): int {
     $extra = env_default('MOODLE_WS_EXTRA_CAPABILITIES', '');
     if ($extra !== '') {
         // Permite adicionar capacidades sem alterar a imagem/container.
-        $capabilities = array_merge($capabilities, split_csv($extra));
+        $capabilities = array_merge($capabilities, resolve_ws_capabilities($extra));
     }
 
     foreach (array_unique($capabilities) as $capability) {
@@ -478,7 +510,7 @@ $admin = update_admin_user($firstinstall);
 ensure_webservice_settings();
 // Lista de funcoes REST que farao parte do servico externo. Pode vir do
 // ambiente ou cair no conjunto padrao usado pela integracao.
-$functions = split_csv(env_default('MOODLE_WS_FUNCTIONS', 'core_webservice_get_site_info,core_course_get_courses,core_course_get_courses_by_field,core_course_create_courses,core_course_update_courses,core_user_get_users_by_field,core_user_create_users,enrol_manual_enrol_users'));
+$functions = resolve_ws_functions(env_default('MOODLE_WS_FUNCTIONS', 'core_webservice_get_site_info,core_course_get_courses,core_course_get_courses_by_field,core_course_create_courses,core_course_update_courses,core_user_get_users_by_field,core_user_create_users,enrol_manual_enrol_users'));
 $service = ensure_service($functions);
 $wsuser = ensure_ws_user();
 ensure_ws_role($wsuser);

@@ -17,7 +17,6 @@ secrets/*.env
 .provisioner/tenants
 
 # Moodle
-moodle/config.php
 /moodledata/
 /data/
 /cache/

@@ -22,6 +22,8 @@
 	@tenantescolao path /i/escola-o/*
 	@tenantescolaz path /i/escola-z/*
 	@tenantescolap path /i/escola-p/*
+	@tenantescolaq path /i/escola-q/*
+	@tenantescolar path /i/escola-r/*
 	redir @home /index.html
 
 	redir /i/escola-a /i/escola-a/
@@ -41,6 +43,8 @@
 	redir /i/escola-o /i/escola-o/
 	redir /i/escola-z /i/escola-z/
 	redir /i/escola-p /i/escola-p/
+	redir /i/escola-q /i/escola-q/
+	redir /i/escola-r /i/escola-r/
 	handle @index {
 		root * /srv
 		file_server
@@ -52,81 +56,133 @@
 	}
 
 	handle @a {
-		reverse_proxy moodle_escola_a:80
+		reverse_proxy moodle_escola_a:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @b {
-		reverse_proxy moodle_escola_b:80
+		reverse_proxy moodle_escola_b:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @c {
-		reverse_proxy moodle_escola_c:80
+		reverse_proxy moodle_escola_c:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolad {
-		reverse_proxy moodle_escola_d:80
+		reverse_proxy moodle_escola_d:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolae {
-		reverse_proxy moodle_escola_e:80
+		reverse_proxy moodle_escola_e:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolaf {
-		reverse_proxy moodle_escola_f:80
+		reverse_proxy moodle_escola_f:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolag {
-		reverse_proxy moodle_escola_g:80
+		reverse_proxy moodle_escola_g:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolah {
-		reverse_proxy moodle_escola_h:80
+		reverse_proxy moodle_escola_h:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolai {
-		reverse_proxy moodle_escola_i:80
+		reverse_proxy moodle_escola_i:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolaj {
-		reverse_proxy moodle_escola_j:80
+		reverse_proxy moodle_escola_j:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolak {
-		reverse_proxy moodle_escola_k:80
+		reverse_proxy moodle_escola_k:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolal {
-		reverse_proxy moodle_escola_l:80
+		reverse_proxy moodle_escola_l:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolaa {
-		reverse_proxy moodle_escola_a:80
+		reverse_proxy moodle_escola_a:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolab {
-		reverse_proxy moodle_escola_b:80
+		reverse_proxy moodle_escola_b:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolac {
-		reverse_proxy moodle_escola_c:80
+		reverse_proxy moodle_escola_c:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolam {
-		reverse_proxy moodle_escola_m:80
+		reverse_proxy moodle_escola_m:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 	handle @tenantescolao {
-		reverse_proxy moodle_escola_o:80
+		reverse_proxy moodle_escola_o:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 
 	handle @tenantescolaz {
-		reverse_proxy moodle_escola_z:80
+		reverse_proxy moodle_escola_z:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 
 	handle @tenantescolap {
-		reverse_proxy moodle_escola_p:80
+		reverse_proxy moodle_escola_p:80 {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+
+	handle @tenantescolaq {
+		reverse_proxy moodle_escola_q:80 {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+
+	handle @tenantescolar {
+		reverse_proxy moodle_escola_r:80 {
+			header_up Host {upstream_hostport}
+		}
 	}
 
 

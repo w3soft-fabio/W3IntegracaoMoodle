@@ -17,3 +17,5 @@ moodle_escola_m
 moodle_escola_o
 moodle_escola_z
 moodle_escola_p
+moodle_escola_q
+moodle_escola_r

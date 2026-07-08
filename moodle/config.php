@@ -40,6 +40,7 @@ $CFG->dboptions = [
 ];
 
 $CFG->wwwroot   = moodle_env_required('MOODLE_URL');
+$CFG->reverseproxy = true;
 $CFG->dataroot  = moodle_env_optional('MOODLE_DATAROOT', '/var/www/moodledata');
 $CFG->admin     = 'admin';
 $CFG->lang      = moodle_env_optional('MOODLE_DEFAULT_LANG', 'pt_br');

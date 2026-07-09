@@ -2,49 +2,11 @@
 	@home path /
 	@index path /index.html
 	@unauthorizedPage path /401.html
-	@a path /i/escola-a/*
-	@b path /i/escola-b/*
-	@c path /i/escola-c/*
+	@tenantescolamodelo path /i/escola-modelo/*
 
-	@tenantescolad path /i/escola-d/*
-	@tenantescolae path /i/escola-e/*
-	@tenantescolaf path /i/escola-f/*
-	@tenantescolag path /i/escola-g/*
-	@tenantescolah path /i/escola-h/*
-	@tenantescolai path /i/escola-i/*
-	@tenantescolaj path /i/escola-j/*
-	@tenantescolak path /i/escola-k/*
-	@tenantescolal path /i/escola-l/*
-	@tenantescolaa path /i/escola-a/*
-	@tenantescolab path /i/escola-b/*
-	@tenantescolac path /i/escola-c/*
-	@tenantescolam path /i/escola-m/*
-	@tenantescolao path /i/escola-o/*
-	@tenantescolaz path /i/escola-z/*
-	@tenantescolap path /i/escola-p/*
-	@tenantescolaq path /i/escola-q/*
-	@tenantescolar path /i/escola-r/*
 	redir @home /index.html
+	redir /i/escola-modelo /i/escola-modelo/
 
-	redir /i/escola-a /i/escola-a/
-	redir /i/escola-b /i/escola-b/
-	redir /i/escola-c /i/escola-c/
-
-	redir /i/escola-d /i/escola-d/
-	redir /i/escola-e /i/escola-e/
-	redir /i/escola-f /i/escola-f/
-	redir /i/escola-g /i/escola-g/
-	redir /i/escola-h /i/escola-h/
-	redir /i/escola-i /i/escola-i/
-	redir /i/escola-j /i/escola-j/
-	redir /i/escola-k /i/escola-k/
-	redir /i/escola-l /i/escola-l/
-	redir /i/escola-m /i/escola-m/
-	redir /i/escola-o /i/escola-o/
-	redir /i/escola-z /i/escola-z/
-	redir /i/escola-p /i/escola-p/
-	redir /i/escola-q /i/escola-q/
-	redir /i/escola-r /i/escola-r/
 	handle @index {
 		root * /srv
 		file_server
@@ -55,136 +17,11 @@
 		file_server
 	}
 
-	handle @a {
-		reverse_proxy moodle_escola_a:80 {
+	handle @tenantescolamodelo {
+		reverse_proxy moodle_escola_modelo:80 {
 			header_up Host {upstream_hostport}
 		}
 	}
-
-	handle @b {
-		reverse_proxy moodle_escola_b:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @c {
-		reverse_proxy moodle_escola_c:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolad {
-		reverse_proxy moodle_escola_d:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolae {
-		reverse_proxy moodle_escola_e:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolaf {
-		reverse_proxy moodle_escola_f:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolag {
-		reverse_proxy moodle_escola_g:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolah {
-		reverse_proxy moodle_escola_h:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolai {
-		reverse_proxy moodle_escola_i:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolaj {
-		reverse_proxy moodle_escola_j:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolak {
-		reverse_proxy moodle_escola_k:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolal {
-		reverse_proxy moodle_escola_l:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolaa {
-		reverse_proxy moodle_escola_a:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolab {
-		reverse_proxy moodle_escola_b:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolac {
-		reverse_proxy moodle_escola_c:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolam {
-		reverse_proxy moodle_escola_m:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-	handle @tenantescolao {
-		reverse_proxy moodle_escola_o:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-
-	handle @tenantescolaz {
-		reverse_proxy moodle_escola_z:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-
-	handle @tenantescolap {
-		reverse_proxy moodle_escola_p:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-
-	handle @tenantescolaq {
-		reverse_proxy moodle_escola_q:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
-
-	handle @tenantescolar {
-		reverse_proxy moodle_escola_r:80 {
-			header_up Host {upstream_hostport}
-		}
-	}
-
 
 	handle {
 		root * /srv

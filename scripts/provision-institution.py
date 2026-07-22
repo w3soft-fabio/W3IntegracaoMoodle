@@ -139,6 +139,7 @@ def env_lines(values: dict) -> str:
             "MOODLE_WS_ROLE_SHORTNAME",
             "MOODLE_WS_TOKEN_FILE",
             "MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAME",
+            "MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAMES",
         ],
     ]
 
@@ -201,6 +202,7 @@ def default_env(spec: dict) -> dict:
         "MOODLE_WS_ROLE_SHORTNAME": "w3soft_ws_integration",
         "MOODLE_WS_TOKEN_FILE": "/var/www/moodledata/w3soft/ws-token.txt",
         "MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAME": "student",
+        "MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAMES": "student,editingteacher",
     }
 
 

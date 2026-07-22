@@ -368,14 +368,24 @@ function ensure_ws_role(stdClass $wsuser): int {
         bootstrap_log("Assigned webservice role to user: {$wsuser->username}.");
     }
 
-    // Autoriza este papel a atribuir o papel alvo em matriculas. Por padrao, o
-    // alvo e `student`, permitindo que a integracao matricule usuarios como
-    // estudantes.
-    $targetshortname = env_default('MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAME', 'student');
-    $targetrole = $DB->get_record('role', ['shortname' => $targetshortname], '*', MUST_EXIST);
-    if (!$DB->record_exists('role_allow_assign', ['roleid' => $roleid, 'allowassign' => $targetrole->id])) {
-        core_role_set_assign_allowed($roleid, $targetrole->id);
-        bootstrap_log("Allowed webservice role to assign target role: {$targetshortname}.");
+    // Autoriza este papel a atribuir os papeis alvo em matriculas. Por padrao,
+    // a integracao pode matricular estudantes e professores editores. A
+    // variavel singular antiga continua sendo aceita para compatibilidade.
+    $targetshortnames = split_csv(env_default(
+        'MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAMES',
+        'student,editingteacher'
+    ));
+    $legacytargetshortname = env_default('MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAME', '');
+    if ($legacytargetshortname !== '') {
+        $targetshortnames = array_merge($targetshortnames, split_csv($legacytargetshortname));
+    }
+
+    foreach (array_unique($targetshortnames) as $targetshortname) {
+        $targetrole = $DB->get_record('role', ['shortname' => $targetshortname], '*', MUST_EXIST);
+        if (!$DB->record_exists('role_allow_assign', ['roleid' => $roleid, 'allowassign' => $targetrole->id])) {
+            core_role_set_assign_allowed($roleid, $targetrole->id);
+            bootstrap_log("Allowed webservice role to assign target role: {$targetshortname}.");
+        }
     }
 
     // Limpa caches de permissao para que as alteracoes fiquem visiveis ainda

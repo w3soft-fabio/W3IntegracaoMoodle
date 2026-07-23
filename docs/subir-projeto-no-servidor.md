@@ -73,6 +73,37 @@ MOODLE_FORCE_LOGIN=1
 Com ela ativa, o Moodle redireciona acessos deslogados da URL base da
 instituicao para `login/index.php`.
 
+Os volumes `moodledata_*` sao externos ao Compose para que os dados das
+instituicoes nao dependam do nome do projeto Compose. Antes de subir uma nova
+instituicao manualmente, crie o volume correspondente uma unica vez:
+
+```sh
+docker volume create moodledata_nome_da_instituicao
+```
+
+### Migrar containers de um nome de projeto Compose antigo
+
+Se os containers existentes foram criados com outro nome de projeto (por
+exemplo, `w3integracaomoodle`), remova **somente os containers** antigos antes
+de executar o `up` sem `-p`. Este comando preserva os volumes, pois nao usa
+`-v`:
+
+```sh
+docker compose -p w3integracaomoodle \
+  -f docker-compose.instituicoes.yml down
+```
+
+Depois, o comando padrao passa a recriar os containers usando a imagem atual e
+os mesmos volumes de dados. O arquivo fixa o novo nome de projeto como
+`moodle-docker`, portanto nao e necessario informar `-p`:
+
+```sh
+docker compose -f docker-compose.instituicoes.yml up -d
+```
+
+Nunca use `down -v` nessa migracao: essa opcao remove os volumes e, com eles,
+os arquivos enviados e demais dados persistidos pelo Moodle.
+
 Exemplos de arquivos esperados:
 
 ```text

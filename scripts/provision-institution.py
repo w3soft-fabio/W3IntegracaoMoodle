@@ -251,6 +251,7 @@ def upsert_compose(spec: dict, dry_run: bool) -> None:
     if f"  {volume}:" not in content:
         block = f"""  {volume}:
     name: {volume}
+    external: true
 """
         content = content.replace("\nnetworks:\n", "\n" + block + "networks:\n")
 
@@ -356,8 +357,15 @@ def rebuild_image(dry_run: bool) -> None:
     run_command(["docker", "build", "-t", IMAGE_TAG, "./moodle"], dry_run)
 
 
+def ensure_data_volume(spec: dict, dry_run: bool) -> None:
+    """Create the tenant data volume when it is absent, without changing it when it exists."""
+    volume = f"moodledata_{slug_to_identifier(spec['slug'])}"
+    run_command(["docker", "volume", "create", volume], dry_run)
+
+
 def start_tenant(spec: dict, dry_run: bool) -> None:
     service = f"moodle_{slug_to_identifier(spec['slug'])}"
+    ensure_data_volume(spec, dry_run)
     run_command(["docker", "compose", "-f", "docker-compose.instituicoes.yml", "up", "-d", service], dry_run)
     run_command(["docker", "compose", "-f", "docker-compose.infra.yml", "restart", "proxy"], dry_run)
 

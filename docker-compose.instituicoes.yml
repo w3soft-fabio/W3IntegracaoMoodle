@@ -1,3 +1,5 @@
+name: moodle-docker
+
 services:
   moodle_escola_modelo:
     image: w3soft/moodle:2026.07.1-local
@@ -15,6 +17,7 @@ services:
 volumes:
   moodledata_escola_modelo:
     name: moodledata_escola_modelo
+    external: true
 networks:
   moodle_net:
     external: true

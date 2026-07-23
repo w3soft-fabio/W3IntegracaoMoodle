@@ -673,7 +673,7 @@ MOODLE_WS_USER_TIMEZONE=America/Maceio
 
 MOODLE_WS_ROLE_SHORTNAME=w3soft_ws_integration
 MOODLE_WS_TOKEN_FILE=/var/www/moodledata/w3soft/ws-token.txt
-MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAME=student
+MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAMES=*
 ```
 
 Defaults aplicados pelo entrypoint:
@@ -687,7 +687,7 @@ Defaults aplicados pelo entrypoint:
 - `MOODLE_WS_FUNCTIONS=core_webservice_get_site_info,core_course_get_courses,core_course_get_courses_by_field,core_user_get_users_by_field,core_user_create_users,enrol_manual_enrol_users`
 - `MOODLE_WS_ROLE_SHORTNAME=w3soft_ws_integration`
 - `MOODLE_WS_TOKEN_FILE=/var/www/moodledata/w3soft/ws-token.txt`
-- `MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAME=student`
+- `MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAMES=*` (todos os papeis, inclusive personalizados)
 
 Variaveis de reset opcionais:
 

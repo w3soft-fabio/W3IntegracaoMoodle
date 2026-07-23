@@ -184,8 +184,10 @@ set_bootstrap_defaults() {
     env_default MOODLE_WS_FUNCTIONS "core_webservice_get_site_info,core_course_get_courses,core_course_get_courses_by_field,core_course_get_categories,core_course_create_categories,core_course_update_categories,core_course_create_courses,core_course_update_courses,core_user_get_users,core_user_get_users_by_field,core_user_create_users,core_user_update_users,core_cohort_create_cohorts,core_cohort_add_cohort_members,core_cohort_delete_cohort_members,enrol_manual_enrol_users,enrol_manual_unenrol_users,core_grades_update_grades,core_calendar_create_calendar_events,local_w3sync_publicar_conteudos"
     env_default MOODLE_WS_ROLE_SHORTNAME "w3soft_ws_integration"
     env_default MOODLE_WS_TOKEN_FILE "$MOODLE_DATAROOT/w3soft/ws-token.txt"
-    env_default MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAME "student"
-    env_default MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAMES "student,editingteacher"
+    # `*` permite que o papel tecnico atribua qualquer papel existente,
+    # inclusive papeis personalizados criados posteriormente no Moodle.
+    # A variavel singular antiga permanece suportada pelo provisionamento.
+    env_default MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAMES "*"
     env_default MOODLE_WS_EXTRA_CAPABILITIES "moodle/course:create,moodle/course:update,moodle/category:manage,moodle/cohort:manage,moodle/role:assign,moodle/grade:edit,moodle/course:manageactivities,mod/assign:grade,moodle/calendar:manageentries"
 }
 
@@ -226,7 +228,6 @@ validate_bootstrap_environment() {
     require_env MOODLE_WS_USER_TIMEZONE
     require_env MOODLE_WS_ROLE_SHORTNAME
     require_env MOODLE_WS_TOKEN_FILE
-    require_env MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAME
     require_env MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAMES
 }
 

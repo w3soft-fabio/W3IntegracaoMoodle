@@ -359,6 +359,9 @@ function ensure_ws_role(stdClass $wsuser): int {
         'moodle/user:viewhiddendetails',
         'moodle/course:useremail',
         'moodle/user:update',
+        // Necessaria para a tela de atribuicao de papeis e para que as regras
+        // em role_allow_assign abaixo tenham efeito.
+        'moodle/role:assign',
         'enrol/manual:enrol',
     ];
 
@@ -389,18 +392,28 @@ function ensure_ws_role(stdClass $wsuser): int {
     }
 
     // Autoriza este papel a atribuir os papeis alvo em matriculas. Por padrao,
-    // a integracao pode matricular estudantes e professores editores. A
-    // variavel singular antiga continua sendo aceita para compatibilidade.
+    // `*` inclui todos os papeis existentes, inclusive papeis personalizados.
+    // A variavel singular antiga continua sendo aceita para compatibilidade.
     $targetshortnames = split_csv(env_default(
         'MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAMES',
-        'student,editingteacher'
+        '*'
     ));
     $legacytargetshortname = env_default('MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAME', '');
     if ($legacytargetshortname !== '') {
         $targetshortnames = array_merge($targetshortnames, split_csv($legacytargetshortname));
     }
 
+    if (in_array('*', $targetshortnames, true)) {
+        $targetshortnames = array_merge(
+            $targetshortnames,
+            $DB->get_fieldset_select('role', 'shortname', '1 = 1 ORDER BY shortname ASC')
+        );
+    }
+
     foreach (array_unique($targetshortnames) as $targetshortname) {
+        if ($targetshortname === '*') {
+            continue;
+        }
         $targetrole = $DB->get_record('role', ['shortname' => $targetshortname], '*', MUST_EXIST);
         if (!$DB->record_exists('role_allow_assign', ['roleid' => $roleid, 'allowassign' => $targetrole->id])) {
             core_role_set_assign_allowed($roleid, $targetrole->id);

@@ -150,6 +150,16 @@ function ensure_access_settings(): void {
     bootstrap_log('Force login is ' . ($forcelogin ? 'enabled.' : 'disabled.'));
 }
 
+// Define o idioma padrao global do site. A configuracao fica no banco, pois
+// ela tambem e usada por instalacoes ja existentes, nao apenas no momento em
+// que o instalador CLI e executado pela primeira vez.
+function ensure_language_settings(): void {
+    $language = env_default('MOODLE_DEFAULT_LANG', 'pt_br');
+
+    set_config('lang', $language);
+    bootstrap_log("Default site language configured: {$language}.");
+}
+
 // Ajusta o perfil do usuario administrador criado pelo instalador do Moodle.
 // Retorna o registro atualizado porque ele sera usado depois como criador do
 // token de webservice.
@@ -527,6 +537,7 @@ $firstinstall = env_bool('MOODLE_BOOTSTRAP_FIRST_INSTALL', false);
 bootstrap_log('Starting tenant provisioning.');
 update_site_identity();
 ensure_access_settings();
+ensure_language_settings();
 $admin = update_admin_user($firstinstall);
 ensure_webservice_settings();
 // Lista de funcoes REST que farao parte do servico externo. Pode vir do

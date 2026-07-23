@@ -175,6 +175,7 @@ EOF
 set_bootstrap_defaults() {
     env_default MOODLE_AUTO_BOOTSTRAP "1"
     env_default MOODLE_DATAROOT "$MOODLE_DEFAULT_DATAROOT"
+    env_default MOODLE_DEFAULT_LANG "pt_br"
     env_default MOODLE_ADMIN_USER "admin"
     env_default MOODLE_ADMIN_FORCE_PASSWORD_CHANGE_ON_INSTALL "1"
     env_default MOODLE_FORCE_LOGIN "1"

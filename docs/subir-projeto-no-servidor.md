@@ -73,6 +73,16 @@ MOODLE_FORCE_LOGIN=1
 Com ela ativa, o Moodle redireciona acessos deslogados da URL base da
 instituicao para `login/index.php`.
 
+Defina tambem o idioma inicial do Moodle para portugues do Brasil:
+
+```text
+MOODLE_DEFAULT_LANG=pt_br
+```
+
+O bootstrap persiste esse idioma como padrao global da instituicao. A
+preferencia individual de idioma de um usuario autenticado continua sendo
+respeitada.
+
 Os volumes `moodledata_*` sao externos ao Compose para que os dados das
 instituicoes nao dependam do nome do projeto Compose. Antes de subir uma nova
 instituicao manualmente, crie o volume correspondente uma unica vez:

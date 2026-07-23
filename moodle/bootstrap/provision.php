@@ -140,6 +140,16 @@ function update_site_identity(): void {
     set_config('timezone', $timezone);
 }
 
+// Exige autenticacao para acessar paginas do Moodle. Com esta configuracao, um
+// visitante que abrir a pagina inicial e redirecionado pelo proprio Moodle para
+// `login/index.php`, antes que a lista de cursos seja exibida.
+function ensure_access_settings(): void {
+    $forcelogin = env_bool('MOODLE_FORCE_LOGIN', true);
+
+    set_config('forcelogin', $forcelogin ? '1' : '0');
+    bootstrap_log('Force login is ' . ($forcelogin ? 'enabled.' : 'disabled.'));
+}
+
 // Ajusta o perfil do usuario administrador criado pelo instalador do Moodle.
 // Retorna o registro atualizado porque ele sera usado depois como criador do
 // token de webservice.
@@ -516,6 +526,7 @@ $firstinstall = env_bool('MOODLE_BOOTSTRAP_FIRST_INSTALL', false);
 
 bootstrap_log('Starting tenant provisioning.');
 update_site_identity();
+ensure_access_settings();
 $admin = update_admin_user($firstinstall);
 ensure_webservice_settings();
 // Lista de funcoes REST que farao parte do servico externo. Pode vir do

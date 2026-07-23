@@ -62,6 +62,17 @@ Pontos importantes:
 - variaveis que ainda estejam com valor `local`;
 - nomes das instituicoes que realmente devem subir.
 
+Para impedir a exposicao da pagina inicial e de dados de cursos a visitantes,
+inclua (ou mantenha) esta configuracao no arquivo de ambiente de cada
+instituicao:
+
+```text
+MOODLE_FORCE_LOGIN=1
+```
+
+Com ela ativa, o Moodle redireciona acessos deslogados da URL base da
+instituicao para `login/index.php`.
+
 Exemplos de arquivos esperados:
 
 ```text

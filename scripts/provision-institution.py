@@ -112,6 +112,7 @@ def env_lines(values: dict) -> str:
             "MOODLE_SITE_SHORTNAME",
             "MOODLE_SITE_SUMMARY",
             "MOODLE_SUPPORT_EMAIL",
+            "MOODLE_FORCE_LOGIN",
         ],
         [
             "MOODLE_ADMIN_USER",
@@ -174,6 +175,7 @@ def default_env(spec: dict) -> dict:
         "MOODLE_SITE_SHORTNAME": slug,
         "MOODLE_SITE_SUMMARY": "",
         "MOODLE_SUPPORT_EMAIL": f"suporte@{local_email_domain}",
+        "MOODLE_FORCE_LOGIN": "1",
         "MOODLE_ADMIN_USER": "admin",
         "MOODLE_ADMIN_PASSWORD": random_password(),
         "MOODLE_ADMIN_FIRSTNAME": "Administrador",

@@ -10,13 +10,25 @@ O fluxo automatizado deve receber os dados da instituicao, preparar a infraestru
 http://localhost:8088/i/{slug}
 ```
 
-Tambem deve criar um usuario tecnico `svc_integracao`, habilitar Web Services REST, criar o servico externo `w3soft_student_sync` e persistir o token em:
+Tambem deve habilitar Web Services REST, criar o servico externo restrito
+`w3soft_student_sync` e persistir o token em:
 
 ```text
 /var/www/moodledata/w3soft/ws-token.txt
 ```
 
 O token nao e impresso em logs.
+
+O token pertence ao administrador primario definido em `MOODLE_ADMIN_USER`. O servico externo expoe
+somente a allowlist configurada em `MOODLE_WS_FUNCTIONS`.
+
+O token deve ser tratado como segredo de alto privilegio: nao o inclua em logs,
+respostas HTTP ou arquivos versionados. Para revoga-lo ou rotaciona-lo, remova o
+token em **Administracao do site > Servidor > Web services > Gerenciar tokens**
+e execute novamente o bootstrap. Um novo token sera criado e gravado no mesmo
+arquivo com permissao `0600`. Depois, atualize o token persistido pelo
+provisionador em `.provisioner/tenants/{tenantId}.json` antes de retomar as
+chamadas da API; o registro nao e atualizado pelo container Moodle.
 
 ## Componentes implementados
 
@@ -74,28 +86,9 @@ Responsabilidades:
 - garantir o protocolo `rest` em `webserviceprotocols`;
 - criar ou atualizar o servico externo por shortname;
 - adicionar as funcoes REST exigidas;
-- criar ou atualizar o usuario tecnico;
-- criar ou atualizar o papel dedicado `w3soft_ws_integration`;
-- atribuir capacidades ao papel tecnico;
-- permitir que o papel tecnico atribua o papel alvo de matricula, por padrao `student`;
-- autorizar o usuario tecnico no servico externo;
+- autorizar o administrador principal no servico externo;
 - reutilizar token ativo existente ou criar um novo token permanente;
 - gravar o token em arquivo com permissao `0600`.
-
-Capacidades padrao do papel tecnico:
-
-```text
-webservice/rest:use
-moodle/webservice:createtoken
-moodle/course:view
-moodle/course:viewhiddencourses
-moodle/user:create
-moodle/user:viewdetails
-moodle/user:viewhiddendetails
-moodle/course:useremail
-moodle/user:update
-enrol/manual:enrol
-```
 
 Funcoes REST padrao:
 
@@ -207,10 +200,9 @@ O arquivo `secrets/{slug}.local.env` inclui:
 - configuracao de URL, banco, Redis, slug e tenant ID;
 - variaveis de bootstrap do site;
 - credenciais iniciais do admin;
-- credenciais do usuario tecnico;
 - configuracao do servico REST e caminho do token.
 
-As senhas de admin e do usuario tecnico sao geradas automaticamente quando o arquivo ainda nao existe. O script preserva valores existentes em reexecucoes.
+A senha do admin e gerada automaticamente quando o arquivo ainda nao existe. O script preserva valores sensiveis existentes em reexecucoes.
 
 Importante: as senhas geradas incluem caractere nao alfanumerico, porque a politica padrao do Moodle exige pelo menos um caractere como `!`, `*`, `-` ou `#`.
 
@@ -227,7 +219,7 @@ Comportamento esperado:
 - se o secret ja existe, valores sensiveis existentes sao preservados;
 - se o banco ja existe, o comando SQL mantem banco, usuario e grants atualizados;
 - se o Moodle ja esta instalado, o entrypoint pula `install_database.php`;
-- se o usuario tecnico, papel, servico e token ja existem, o provisionamento reutiliza.
+- se o administrador, servico e token ja existem, o provisionamento reutiliza.
 
 ## Validacao
 
@@ -269,7 +261,7 @@ O retorno deve conter o site, o usuario do token e a versao do Moodle. Para a Es
 
 ```text
 site=Escola G
-user=svc_integracao
+user=admin
 release=4.5.12+ (Build: 20260616)
 ```
 

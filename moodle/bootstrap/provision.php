@@ -87,22 +87,6 @@ function resolve_ws_functions(string $value): array {
     return split_csv($value);
 }
 
-// Resolve capabilities extras do papel tecnico. Com `*`, expande para todas
-// as capabilities registradas nesta instalacao, incluindo plugins ativos.
-function resolve_ws_capabilities(string $value): array {
-    global $DB;
-
-    if (trim($value) === '*') {
-        return $DB->get_fieldset_select(
-            'capabilities',
-            'name',
-            '1 = 1 ORDER BY name ASC'
-        );
-    }
-
-    return split_csv($value);
-}
-
 // Atualiza os dados publicos do site Moodle, como nome completo, nome curto,
 // resumo, email de suporte e timezone padrao.
 function update_site_identity(): void {
@@ -275,194 +259,54 @@ function ensure_service(array $functions): stdClass {
         }
     }
 
+    // Mantem o servico exatamente igual a allowlist configurada. Isso tambem
+    // corrige uma instalacao parcial que tenha sido iniciada anteriormente com
+    // `MOODLE_WS_FUNCTIONS=*`.
+    $configuredfunctions = array_fill_keys($functions, true);
+    $linkedfunctions = $DB->get_fieldset_select(
+        'external_services_functions',
+        'functionname',
+        'externalserviceid = :serviceid',
+        ['serviceid' => $service->id]
+    );
+    foreach ($linkedfunctions as $function) {
+        if (!isset($configuredfunctions[$function])) {
+            $manager->remove_external_function_from_service($function, $service->id);
+            bootstrap_log("Removed function from service: {$function}.");
+        }
+    }
+
     return $manager->get_external_service_by_shortname($shortname, MUST_EXIST);
 }
 
-// Cria ou atualiza o usuario tecnico que sera usado pela integracao REST. Esse
-// usuario e separado do admin para seguir o principio de menor privilegio.
-function ensure_ws_user(): stdClass {
-    global $DB;
-
-    $username = core_text::strtolower(env_required('MOODLE_WS_USER_USERNAME'));
-    $password = env_required('MOODLE_WS_USER_PASSWORD');
-    $existing = $DB->get_record('user', ['username' => $username, 'deleted' => 0]);
-
-    $user = (object)[
-        'username' => $username,
-        'firstname' => env_required('MOODLE_WS_USER_FIRSTNAME'),
-        'lastname' => env_required('MOODLE_WS_USER_LASTNAME'),
-        'email' => env_required('MOODLE_WS_USER_EMAIL'),
-        'city' => env_required('MOODLE_WS_USER_CITY'),
-        'country' => env_required('MOODLE_WS_USER_COUNTRY'),
-        'timezone' => env_required('MOODLE_WS_USER_TIMEZONE'),
-        'auth' => 'manual',
-        'confirmed' => 1,
-        'mnethostid' => 1,
-    ];
-
-    if ($existing) {
-        // Assim como no admin, a senha do usuario tecnico so muda quando a flag
-        // explicita de reset estiver ativa.
-        $user->id = $existing->id;
-        $resetpassword = env_bool('MOODLE_WS_USER_RESET_PASSWORD', false);
-        if ($resetpassword) {
-            $user->password = $password;
-        }
-        user_update_user($user, $resetpassword, false);
-        bootstrap_log("Technical webservice user already exists: {$username}.");
-        return $DB->get_record('user', ['id' => $existing->id], '*', MUST_EXIST);
-    }
-
-    $user->password = $password;
-    $userid = user_create_user($user, true, false);
-    bootstrap_log("Created technical webservice user: {$username}.");
-    return $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
-}
-
-// Cria ou atualiza um papel do Moodle com as permissoes necessarias para o
-// usuario tecnico operar a integracao REST.
-function ensure_ws_role(stdClass $wsuser): int {
-    global $DB;
-
-    $shortname = env_default('MOODLE_WS_ROLE_SHORTNAME', 'w3soft_ws_integration');
-    $name = env_default('MOODLE_WS_ROLE_NAME', 'W3Soft webservice integration');
-    $description = 'Role managed by Moodle container bootstrap for REST integrations.';
-    $systemcontext = context_system::instance();
-
-    $role = $DB->get_record('role', ['shortname' => $shortname]);
-    if ($role) {
-        $role->name = $name;
-        $role->description = $description;
-        $DB->update_record('role', $role);
-        $roleid = (int)$role->id;
-        bootstrap_log("Webservice role already exists: {$shortname}.");
-    } else {
-        $roleid = create_role($name, $shortname, $description);
-        bootstrap_log("Created webservice role: {$shortname}.");
-    }
-
-    // Limita o papel ao contexto de sistema. Ou seja, ele e atribuido no nivel
-    // global do Moodle, nao dentro de um curso especifico.
-    set_role_contextlevels($roleid, [CONTEXT_SYSTEM]);
-
-    // Capacidades minimas para consultar/criar cursos, criar usuarios e
-    // realizar matriculas manuais via webservice.
-    $capabilities = [
-        'webservice/rest:use',
-        'moodle/webservice:createtoken',
-        'moodle/course:view',
-        'moodle/course:viewhiddencourses',
-        'moodle/course:create',
-        'moodle/course:update',
-        'moodle/user:create',
-        'moodle/user:viewdetails',
-        'moodle/user:viewhiddendetails',
-        'moodle/course:useremail',
-        'moodle/user:update',
-        // Necessaria para a tela de atribuicao de papeis e para que as regras
-        // em role_allow_assign abaixo tenham efeito.
-        'moodle/role:assign',
-        'enrol/manual:enrol',
-    ];
-
-    $extra = env_default('MOODLE_WS_EXTRA_CAPABILITIES', '');
-    if ($extra !== '') {
-        // Permite adicionar capacidades sem alterar a imagem/container.
-        $capabilities = array_merge($capabilities, resolve_ws_capabilities($extra));
-    }
-
-    foreach (array_unique($capabilities) as $capability) {
-        // Valida cada capability antes de atribuir. Isso evita gravar permissoes
-        // inexistentes por erro de digitacao ou por plugin ausente.
-        if (!get_capability_info($capability)) {
-            bootstrap_fail("Capability does not exist in this Moodle installation: {$capability}");
-        }
-        assign_capability($capability, CAP_ALLOW, $roleid, $systemcontext->id, true);
-    }
-
-    // Atribui o papel ao usuario tecnico no contexto global, se ainda nao tiver
-    // sido atribuido.
-    if (!$DB->record_exists('role_assignments', [
-        'roleid' => $roleid,
-        'contextid' => $systemcontext->id,
-        'userid' => $wsuser->id,
-    ])) {
-        role_assign($roleid, $wsuser->id, $systemcontext->id);
-        bootstrap_log("Assigned webservice role to user: {$wsuser->username}.");
-    }
-
-    // Autoriza este papel a atribuir os papeis alvo em matriculas. Por padrao,
-    // `*` inclui todos os papeis existentes, inclusive papeis personalizados.
-    // A variavel singular antiga continua sendo aceita para compatibilidade.
-    $targetshortnames = split_csv(env_default(
-        'MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAMES',
-        '*'
-    ));
-    $legacytargetshortname = env_default('MOODLE_WS_ENROL_TARGET_ROLE_SHORTNAME', '');
-    if ($legacytargetshortname !== '') {
-        $targetshortnames = array_merge($targetshortnames, split_csv($legacytargetshortname));
-    }
-
-    if (in_array('*', $targetshortnames, true)) {
-        $targetshortnames = array_merge(
-            $targetshortnames,
-            $DB->get_fieldset_select('role', 'shortname', '1 = 1 ORDER BY shortname ASC')
-        );
-    }
-
-    foreach (array_unique($targetshortnames) as $targetshortname) {
-        if ($targetshortname === '*') {
-            continue;
-        }
-        $targetrole = $DB->get_record('role', ['shortname' => $targetshortname], '*', MUST_EXIST);
-        if (!$DB->record_exists('role_allow_assign', ['roleid' => $roleid, 'allowassign' => $targetrole->id])) {
-            core_role_set_assign_allowed($roleid, $targetrole->id);
-            bootstrap_log("Allowed webservice role to assign target role: {$targetshortname}.");
-        }
-    }
-
-    // Limpa caches de permissao para que as alteracoes fiquem visiveis ainda
-    // neste processo e nas proximas requisicoes.
-    accesslib_clear_all_caches(true);
-    return $roleid;
-}
-
-// Autoriza explicitamente o usuario tecnico a usar o servico externo criado.
+// Autoriza explicitamente o administrador a usar o servico externo criado.
 // Isso e necessario porque o servico foi criado com `restrictedusers = 1`.
-function authorize_service_user(stdClass $service, stdClass $wsuser): void {
+function authorize_service_user(stdClass $service, stdClass $admin): void {
     global $DB;
 
     $record = $DB->get_record('external_services_users', [
         'externalserviceid' => $service->id,
-        'userid' => $wsuser->id,
+        'userid' => $admin->id,
     ]);
 
-    $iprestriction = env_default('MOODLE_WS_USER_IP_RESTRICTION', '');
-    $validuntil = (int)env_default('MOODLE_WS_USER_VALID_UNTIL', '0');
-
     if ($record) {
-        // Se a autorizacao ja existe, apenas sincroniza restricao de IP e
-        // validade com as variaveis de ambiente atuais.
-        $record->iprestriction = $iprestriction;
-        $record->validuntil = $validuntil;
-        $DB->update_record('external_services_users', $record);
-        bootstrap_log("Technical user already authorized for service.");
+        bootstrap_log("Administrator already authorized for service.");
         return;
     }
 
     $DB->insert_record('external_services_users', (object)[
         'externalserviceid' => $service->id,
-        'userid' => $wsuser->id,
-        'iprestriction' => $iprestriction,
-        'validuntil' => $validuntil,
+        'userid' => $admin->id,
+        'iprestriction' => '',
+        'validuntil' => 0,
         'timecreated' => time(),
     ]);
-    bootstrap_log("Authorized technical user for service.");
+    bootstrap_log("Authorized administrator for service.");
 }
 
 // Busca um token permanente ainda valido para o par usuario/servico. Se nao
 // existir, cria um novo token e retorna o valor que a aplicacao externa usara.
-function ensure_token(stdClass $service, stdClass $wsuser, stdClass $admin): string {
+function ensure_token(stdClass $service, stdClass $admin): string {
     global $DB;
 
     $now = time();
@@ -475,7 +319,7 @@ function ensure_token(stdClass $service, stdClass $wsuser, stdClass $admin): str
             AND (validuntil IS NULL OR validuntil = 0 OR validuntil > :now)
        ORDER BY id ASC',
         [
-            'userid' => $wsuser->id,
+            'userid' => $admin->id,
             'serviceid' => $service->id,
             'tokentype' => EXTERNAL_TOKEN_PERMANENT,
             'now' => $now,
@@ -499,7 +343,7 @@ function ensure_token(stdClass $service, stdClass $wsuser, stdClass $admin): str
         'token' => $tokenvalue,
         'privatetoken' => random_string(64),
         'tokentype' => EXTERNAL_TOKEN_PERMANENT,
-        'userid' => $wsuser->id,
+        'userid' => $admin->id,
         'externalserviceid' => $service->id,
         'sid' => null,
         'contextid' => context_system::instance()->id,
@@ -557,9 +401,7 @@ ensure_webservice_settings();
 // ambiente ou cair no conjunto padrao usado pela integracao.
 $functions = resolve_ws_functions(env_default('MOODLE_WS_FUNCTIONS', 'core_webservice_get_site_info,core_course_get_courses,core_course_get_courses_by_field,core_course_create_courses,core_course_update_courses,core_user_get_users_by_field,core_user_create_users,enrol_manual_enrol_users'));
 $service = ensure_service($functions);
-$wsuser = ensure_ws_user();
-ensure_ws_role($wsuser);
-authorize_service_user($service, $wsuser);
-$token = ensure_token($service, $wsuser, $admin);
+authorize_service_user($service, $admin);
+$token = ensure_token($service, $admin);
 write_token_file($token);
 bootstrap_log('Tenant provisioning finished.');

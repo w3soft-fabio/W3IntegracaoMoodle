@@ -1,0 +1,34 @@
+:80 {
+	@home path /
+	@index path /index.html
+	@unauthorizedPage path /401.html
+
+	@tenantescolamodelo path /i/escola-modelo/*
+	redir @home /index.html
+
+	redir /i/escola-modelo /i/escola-modelo/
+	handle @index {
+		root * /srv
+		file_server
+	}
+
+	handle @unauthorizedPage {
+		root * /srv
+		file_server
+	}
+
+	handle @tenantescolamodelo {
+		reverse_proxy moodle_escola_modelo:80 {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+
+	handle {
+		root * /srv
+		rewrite * /401.html
+		file_server {
+			status 401
+		}
+	}
+}

@@ -2,11 +2,11 @@
 	@home path /
 	@index path /index.html
 	@unauthorizedPage path /401.html
+
 	@tenantescolamodelo path /i/escola-modelo/*
-
 	redir @home /index.html
-	redir /i/escola-modelo /i/escola-modelo/
 
+	redir /i/escola-modelo /i/escola-modelo/
 	handle @index {
 		root * /srv
 		file_server
@@ -22,6 +22,7 @@
 			header_up Host {upstream_hostport}
 		}
 	}
+
 
 	handle {
 		root * /srv

@@ -24,6 +24,8 @@ secrets/*.env
 /sessions/
 /temp/
 /trashdir/
+/proxy/Caddyfile.local
+/config/moodle-cron-tenants.txt
 
 # Docker e banco de dados locais
 db_data/

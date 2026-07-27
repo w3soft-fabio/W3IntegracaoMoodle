@@ -13,7 +13,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 COMPOSE_FILE = ROOT / "docker-compose.instituicoes.yml"
 CADDY_FILE = ROOT / "proxy" / "Caddyfile.local"
-CRON_TENANTS_FILE = ROOT / "config" / "moodle-cron-tenants.txt"
 SECRETS_DIR = ROOT / "secrets"
 IMAGE_TAG = "w3soft/moodle:2026.07.1-local"
 
@@ -117,6 +116,12 @@ def env_lines(values: dict) -> str:
             "MOODLE_FORCE_LOGIN",
         ],
         [
+            "MOODLE_BBB_ENABLED",
+            "MOODLE_BBB_SERVER_URL",
+            "MOODLE_BBB_SHARED_SECRET",
+            "MOODLE_BBB_CHECKSUM_ALGORITHM",
+        ],
+        [
             "MOODLE_ADMIN_USER",
             "MOODLE_ADMIN_PASSWORD",
             "MOODLE_ADMIN_FIRSTNAME",
@@ -179,6 +184,10 @@ def default_env(spec: dict) -> dict:
         "MOODLE_SITE_SUMMARY": "",
         "MOODLE_SUPPORT_EMAIL": f"suporte@{local_email_domain}",
         "MOODLE_FORCE_LOGIN": "1",
+        "MOODLE_BBB_ENABLED": "1",
+        "MOODLE_BBB_SERVER_URL": "",
+        "MOODLE_BBB_SHARED_SECRET": "",
+        "MOODLE_BBB_CHECKSUM_ALGORITHM": "SHA256",
         "MOODLE_ADMIN_USER": "admin",
         "MOODLE_ADMIN_PASSWORD": random_password(),
         "MOODLE_ADMIN_FIRSTNAME": "Administrador",
@@ -231,7 +240,25 @@ def upsert_compose(spec: dict, dry_run: bool) -> None:
     content = read_text(COMPOSE_FILE)
     ident = slug_to_identifier(spec["slug"])
     service = f"moodle_{ident}"
+    cron_service = f"{service}_cron"
     volume = f"moodledata_{ident}"
+
+    cron_block = f"""  {cron_service}:
+    image: {IMAGE_TAG}
+    container_name: {cron_service}
+    restart: unless-stopped
+    env_file:
+      - ./secrets/{spec['slug']}.local.env
+    volumes:
+      - {volume}:/var/www/moodledata
+    networks:
+      - moodle_net
+    command: >
+      sh -c 'while true; do
+        runuser -u www-data -- php /var/www/html/admin/cli/cron.php --keep-alive=0;
+        sleep 60;
+      done'
+"""
 
     if f"  {service}:" not in content:
         block = f"""  {service}:
@@ -247,8 +274,10 @@ def upsert_compose(spec: dict, dry_run: bool) -> None:
     cpus: "{spec['cpu']}"
     mem_limit: {spec['memoryLimit']}
     mem_reservation: {spec['memoryReservation']}
-"""
+""" + "\n" + cron_block
         content = content.replace("\nvolumes:\n", "\n" + block + "volumes:\n")
+    elif f"  {cron_service}:" not in content:
+        content = content.replace("\nvolumes:\n", "\n" + cron_block + "volumes:\n")
 
     if f"  {volume}:" not in content:
         block = f"""  {volume}:
@@ -298,22 +327,6 @@ def upsert_caddy(spec: dict, dry_run: bool) -> None:
         print(f"DRY-RUN: would update {CADDY_FILE.relative_to(ROOT)}")
     else:
         write_text(CADDY_FILE, content)
-
-
-def upsert_cron_tenant(spec: dict, dry_run: bool) -> None:
-    service = f"moodle_{slug_to_identifier(spec['slug'])}"
-    content = read_text(CRON_TENANTS_FILE)
-    lines = content.splitlines()
-
-    if service not in lines:
-        if content and not content.endswith("\n"):
-            content += "\n"
-        content += service + "\n"
-
-    if dry_run:
-        print(f"DRY-RUN: would update {CRON_TENANTS_FILE.relative_to(ROOT)}")
-    else:
-        write_text(CRON_TENANTS_FILE, content)
 
 
 def sql_escape(value: str) -> str:
@@ -367,8 +380,9 @@ def ensure_data_volume(spec: dict, dry_run: bool) -> None:
 
 def start_tenant(spec: dict, dry_run: bool) -> None:
     service = f"moodle_{slug_to_identifier(spec['slug'])}"
+    cron_service = f"{service}_cron"
     ensure_data_volume(spec, dry_run)
-    run_command(["docker", "compose", "-f", "docker-compose.instituicoes.yml", "up", "-d", service], dry_run)
+    run_command(["docker", "compose", "-f", "docker-compose.instituicoes.yml", "up", "-d", service, cron_service], dry_run)
     run_command(["docker", "compose", "-f", "docker-compose.infra.yml", "restart", "proxy"], dry_run)
 
 
@@ -385,7 +399,6 @@ def main() -> None:
     spec = load_spec(args.json_file)
     upsert_compose(spec, args.dry_run)
     upsert_caddy(spec, args.dry_run)
-    upsert_cron_tenant(spec, args.dry_run)
     env_path = upsert_env_file(spec, args.dry_run)
 
     if args.create_db or args.apply_all:

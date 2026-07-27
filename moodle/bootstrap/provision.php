@@ -149,6 +149,84 @@ function ensure_language_settings(): void {
     bootstrap_log('Browser language auto-detection is ' . ($autodetect ? 'enabled.' : 'disabled.'));
 }
 
+// Habilita o modulo BigBlueButton que acompanha o Moodle e, quando informadas,
+// persiste as credenciais da API recebidas pelo env_file do tenant. A operacao
+// roda em todo startup para corrigir tanto instalacoes novas quanto bancos que
+// tenham o modulo oculto depois de uma atualizacao.
+function ensure_bigbluebutton_settings(): void {
+    $enabled = env_bool('MOODLE_BBB_ENABLED', true);
+
+    if (!class_exists(\core\plugininfo\mod::class)) {
+        bootstrap_fail('Moodle activity plugin manager is unavailable.');
+    }
+
+    try {
+        $changed = \core\plugininfo\mod::enable_plugin('bigbluebuttonbn', $enabled ? 1 : 0);
+    } catch (Throwable $exception) {
+        bootstrap_fail('Could not configure the BigBlueButton activity module: ' . $exception->getMessage());
+    }
+
+    if (!$enabled) {
+        bootstrap_log('BigBlueButton activity module is disabled by MOODLE_BBB_ENABLED.');
+        return;
+    }
+
+    bootstrap_log(
+        $changed
+            ? 'BigBlueButton activity module enabled.'
+            : 'BigBlueButton activity module already enabled.'
+    );
+
+    $serverurl = trim(env_default('MOODLE_BBB_SERVER_URL', ''));
+    $sharedsecret = env_default('MOODLE_BBB_SHARED_SECRET', '');
+
+    // As duas credenciais formam um par. Aceitar somente uma delas deixaria o
+    // seletor de atividades visivel, mas todas as chamadas da API falhariam.
+    if (($serverurl === '') !== ($sharedsecret === '')) {
+        bootstrap_fail(
+            'MOODLE_BBB_SERVER_URL and MOODLE_BBB_SHARED_SECRET must be provided together.'
+        );
+    }
+
+    // Mantem compatibilidade com tenants existentes enquanto as credenciais
+    // ainda nao foram adicionadas ao arquivo .env. Assim que forem preenchidas,
+    // o proximo startup aplica a configuracao automaticamente.
+    if ($serverurl === '') {
+        bootstrap_log(
+            'BigBlueButton credentials not configured; set MOODLE_BBB_SERVER_URL '
+            . 'and MOODLE_BBB_SHARED_SECRET in the tenant .env file.'
+        );
+        return;
+    }
+
+    $parsedurl = parse_url($serverurl);
+    $scheme = strtolower((string)($parsedurl['scheme'] ?? ''));
+    if (!filter_var($serverurl, FILTER_VALIDATE_URL) || !in_array($scheme, ['http', 'https'], true)) {
+        bootstrap_fail('MOODLE_BBB_SERVER_URL must be a valid HTTP or HTTPS URL.');
+    }
+
+    // O endpoint retornado por `bbb-conf --secret` termina com barra. Normalizar
+    // aqui evita URLs quebradas ao concatenar os caminhos da API.
+    $serverurl = rtrim($serverurl, '/') . '/';
+
+    $algorithm = strtoupper(trim(env_default('MOODLE_BBB_CHECKSUM_ALGORITHM', 'SHA256')));
+    $allowedalgorithms = ['SHA1', 'SHA256', 'SHA512'];
+    if (!in_array($algorithm, $allowedalgorithms, true)) {
+        bootstrap_fail(
+            'MOODLE_BBB_CHECKSUM_ALGORITHM must be one of: ' . implode(', ', $allowedalgorithms) . '.'
+        );
+    }
+
+    // Estes sao os nomes globais usados pelo mod_bigbluebuttonbn do Moodle 5.0.
+    // O segredo nunca e incluido nos logs.
+    set_config('bigbluebuttonbn_server_url', $serverurl);
+    set_config('bigbluebuttonbn_shared_secret', $sharedsecret);
+    set_config('bigbluebuttonbn_checksum_algorithm', $algorithm);
+
+    bootstrap_log("BigBlueButton server configured: {$serverurl}");
+    bootstrap_log("BigBlueButton checksum algorithm configured: {$algorithm}.");
+}
+
 // Ajusta o perfil do usuario administrador criado pelo instalador do Moodle.
 // Retorna o registro atualizado porque ele sera usado depois como criador do
 // token de webservice.
@@ -400,6 +478,7 @@ bootstrap_log('Starting tenant provisioning.');
 update_site_identity();
 ensure_access_settings();
 ensure_language_settings();
+ensure_bigbluebutton_settings();
 $admin = update_admin_user($firstinstall);
 ensure_webservice_settings();
 // Lista de funcoes REST que farao parte do servico externo. Pode vir do

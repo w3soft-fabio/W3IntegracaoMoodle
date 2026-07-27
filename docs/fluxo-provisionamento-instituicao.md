@@ -10,7 +10,7 @@ O objetivo e deixar claro o que acontece em cada camada:
 - banco de dados MariaDB;
 - inicializacao do Moodle dentro do container;
 - configuracoes PHP/Moodle aplicadas depois que o container sobe;
-- cron centralizado;
+- cron periodico por instituicao;
 - validacao e diagnostico.
 
 ## Visao geral
@@ -50,7 +50,7 @@ Componentes por instituicao:
 - arquivo `secrets/{slug}.local.env`;
 - volume `moodledata_{slug_com_underscore}`;
 - rota no Caddy para `/i/{slug}`;
-- entrada no arquivo de cron centralizado.
+- container `moodle_{slug_com_underscore}_cron`.
 
 Para `tmp/escola-i.json`, o slug e `escola-i`. O identificador tecnico usado em
 nomes Docker e banco troca hifen por underline: `escola_i`.
@@ -145,11 +145,10 @@ No dry-run com `tmp/escola-i.json`, a sequencia planejada e:
 ```text
 atualizar docker-compose.instituicoes.yml
 atualizar proxy/Caddyfile.local
-atualizar config/moodle-cron-tenants.txt
 gerar secrets/escola-i.local.env
 executar SQL no container moodle_db
 buildar imagem w3soft/moodle:2026.07.1-local
-subir servico moodle_escola_i
+subir servicos moodle_escola_i e moodle_escola_i_cron
 reiniciar proxy Caddy
 ```
 
@@ -163,7 +162,7 @@ Constantes principais:
 ROOT                         raiz do projeto
 COMPOSE_FILE                 docker-compose.instituicoes.yml
 CADDY_FILE                   proxy/Caddyfile.local
-CRON_TENANTS_FILE            config/moodle-cron-tenants.txt
+CRON_SERVICE                  moodle_{tenant}_cron
 SECRETS_DIR                  secrets
 IMAGE_TAG                    w3soft/moodle:2026.07.1-local
 ```
@@ -175,12 +174,11 @@ Fluxo principal da funcao `main()`:
 2. carregar e validar JSON
 3. atualizar docker-compose.instituicoes.yml
 4. atualizar proxy/Caddyfile.local
-5. atualizar config/moodle-cron-tenants.txt
-6. gerar/atualizar secrets/{slug}.local.env
-7. se --create-db ou --apply-all: criar/atualizar banco
-8. se --rebuild-image ou --apply-all: rebuildar imagem
-9. se --up ou --apply-all: subir container e reiniciar proxy
-10. imprimir resumo
+5. gerar/atualizar secrets/{slug}.local.env
+6. se --create-db ou --apply-all: criar/atualizar banco
+7. se --rebuild-image ou --apply-all: rebuildar imagem
+8. se --up ou --apply-all: subir Moodle, cron e reiniciar proxy
+9. imprimir resumo
 ```
 
 O script e majoritariamente idempotente. Idempotente significa que a mesma
@@ -350,23 +348,20 @@ Detalhe de implementacao:
 - se o fallback nao existir com o texto esperado, o script falha com
   `Caddy fallback 401 block not found.`
 
-### `config/moodle-cron-tenants.txt`
+### Servico `moodle_{tenant}_cron`
 
-Tipo: arquivo modificado.
+Tipo: servico Docker criado junto com cada tenant.
 
 Funcao:
 
-- lista os containers Moodle que devem receber execucao de cron;
-- e a fonte de verdade para os scripts de cron centralizado.
+- executa `admin/cli/cron.php --keep-alive=0` como `www-data`;
+- aguarda 60 segundos entre uma execucao e outra;
+- reutiliza a mesma imagem, `env_file`, rede e `moodledata` do Moodle;
+- reinicia automaticamente com `restart: unless-stopped`.
 
-Para `escola-i`, o script adiciona:
-
-```text
-moodle_escola_i
-```
-
-O arquivo aceita comentarios e linhas vazias, que sao ignorados pelos scripts
-`scripts/run-moodle-crons.sh` e `scripts/run-moodle-crons-distributed.sh`.
+Assim, o cron nao depende de `crontab` no host. Os scripts de cron
+centralizado permanecem apenas para operacao manual ou para ambientes legados;
+nao devem ser agendados ao mesmo tempo que os containers cron.
 
 ### `secrets/escola-i.local.env`
 
@@ -407,6 +402,11 @@ MOODLE_SITE_FULLNAME
 MOODLE_SITE_SHORTNAME
 MOODLE_SITE_SUMMARY
 MOODLE_SUPPORT_EMAIL
+
+MOODLE_BBB_ENABLED
+MOODLE_BBB_SERVER_URL
+MOODLE_BBB_SHARED_SECRET
+MOODLE_BBB_CHECKSUM_ALGORITHM
 
 MOODLE_ADMIN_USER
 MOODLE_ADMIN_PASSWORD
@@ -757,8 +757,8 @@ repetidamente em cada requisicao.
 
 ### `scripts/run-moodle-crons.sh`
 
-Tipo: arquivo nao alterado pelo provisionamento, mas usa a entrada criada em
-`config/moodle-cron-tenants.txt`.
+Tipo: ferramenta manual/legada. Nao e usada pelo provisionamento de novos
+tenants.
 
 Funcao:
 
@@ -777,7 +777,8 @@ container. Isso evita criar arquivos do Moodle como `root`.
 
 ### `scripts/run-moodle-crons-distributed.sh`
 
-Tipo: arquivo nao alterado pelo provisionamento.
+Tipo: ferramenta manual/legada. Nao deve ser agendada junto com os containers
+`moodle_{tenant}_cron`.
 
 Funcao:
 
@@ -939,7 +940,6 @@ scripts/provision-institution.py tmp/escola-i.json --apply-all
 2. Python atualiza arquivos host
    - docker-compose.instituicoes.yml
    - proxy/Caddyfile.local
-   - config/moodle-cron-tenants.txt
    - secrets/escola-i.local.env
 
 3. Python cria/atualiza banco
@@ -951,8 +951,8 @@ scripts/provision-institution.py tmp/escola-i.json --apply-all
 4. Python builda imagem Moodle
    - docker build -t w3soft/moodle:2026.07.1-local ./moodle
 
-5. Python sobe container
-   - docker compose -f docker-compose.instituicoes.yml up -d moodle_escola_i
+5. Python sobe os containers Moodle e cron
+   - docker compose -f docker-compose.instituicoes.yml up -d moodle_escola_i moodle_escola_i_cron
 
 6. Container inicia entrypoint
    - configura Apache para /i/escola-i
@@ -985,9 +985,9 @@ No host:
 
 ```text
 docker-compose.instituicoes.yml com moodle_escola_i
+docker-compose.instituicoes.yml com moodle_escola_i_cron
 docker-compose.instituicoes.yml com volume moodledata_escola_i
 proxy/Caddyfile.local com rota /i/escola-i/*
-config/moodle-cron-tenants.txt com moodle_escola_i
 secrets/escola-i.local.env
 ```
 
@@ -995,6 +995,7 @@ No Docker:
 
 ```text
 container moodle_escola_i
+container moodle_escola_i_cron
 volume moodledata_escola_i
 imagem w3soft/moodle:2026.07.1-local
 rota Caddy ativa no container moodle_proxy
@@ -1266,22 +1267,22 @@ Acao:
 
 Sintomas:
 
-- nao ha log para o tenant em `logs/moodle-cron`;
+- `moodle_escola_i_cron` esta parado ou reiniciando;
 - tarefas agendadas do Moodle nao rodam.
 
 Diagnostico:
 
 ```sh
-grep moodle_escola_i config/moodle-cron-tenants.txt
-scripts/run-moodle-crons.sh moodle_escola_i
+docker ps --filter name='^/moodle_escola_i_cron$'
+docker logs --tail=120 moodle_escola_i_cron
 ```
 
 Possiveis causas:
 
-- container nao esta listado;
-- container nao existe;
-- container existe, mas esta parado;
-- outro cron ainda esta segurando lock.
+- container cron nao foi criado junto com o tenant;
+- imagem Moodle ainda nao foi reconstruida quando houve alteracao no cron;
+- falha de conexao do Moodle com banco ou Redis;
+- um cron manual legado esta sendo executado em paralelo.
 
 ## Pontos de atencao para evolucao
 

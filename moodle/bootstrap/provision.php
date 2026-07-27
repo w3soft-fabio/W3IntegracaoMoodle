@@ -136,12 +136,17 @@ function ensure_access_settings(): void {
 
 // Define o idioma padrao global do site. A configuracao fica no banco, pois
 // ela tambem e usada por instalacoes ja existentes, nao apenas no momento em
-// que o instalador CLI e executado pela primeira vez.
+// que o instalador CLI e executado pela primeira vez. Por padrao, desabilita
+// a deteccao do idioma do navegador para que um visitante com Chrome em ingles
+// ainda receba a tela inicial em portugues.
 function ensure_language_settings(): void {
     $language = env_default('MOODLE_DEFAULT_LANG', 'pt_br');
+    $autodetect = env_bool('MOODLE_AUTO_DETECT_LANG', false);
 
     set_config('lang', $language);
+    set_config('autolang', $autodetect ? '1' : '0');
     bootstrap_log("Default site language configured: {$language}.");
+    bootstrap_log('Browser language auto-detection is ' . ($autodetect ? 'enabled.' : 'disabled.'));
 }
 
 // Ajusta o perfil do usuario administrador criado pelo instalador do Moodle.

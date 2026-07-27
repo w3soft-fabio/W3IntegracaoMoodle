@@ -109,6 +109,7 @@ def env_lines(values: dict) -> str:
         [
             "MOODLE_AUTO_BOOTSTRAP",
             "MOODLE_DEFAULT_LANG",
+            "MOODLE_AUTO_DETECT_LANG",
             "MOODLE_SITE_FULLNAME",
             "MOODLE_SITE_SHORTNAME",
             "MOODLE_SITE_SUMMARY",
@@ -172,6 +173,7 @@ def default_env(spec: dict) -> dict:
         "MOODLE_REDIS_PREFIX": f"{ident}_",
         "MOODLE_AUTO_BOOTSTRAP": "1",
         "MOODLE_DEFAULT_LANG": "pt_br",
+        "MOODLE_AUTO_DETECT_LANG": "0",
         "MOODLE_SITE_FULLNAME": spec["displayName"],
         "MOODLE_SITE_SHORTNAME": slug,
         "MOODLE_SITE_SUMMARY": "",

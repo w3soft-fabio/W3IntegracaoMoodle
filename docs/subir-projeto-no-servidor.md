@@ -77,11 +77,13 @@ Defina tambem o idioma inicial do Moodle para portugues do Brasil:
 
 ```text
 MOODLE_DEFAULT_LANG=pt_br
+MOODLE_AUTO_DETECT_LANG=0
 ```
 
-O bootstrap persiste esse idioma como padrao global da instituicao. A
-preferencia individual de idioma de um usuario autenticado continua sendo
-respeitada.
+O bootstrap persiste esse idioma como padrao global da instituicao e, com a
+autodeteccao desabilitada, a preferencia de idioma do navegador nao troca a
+tela publica para ingles. A preferencia individual de idioma de um usuario
+autenticado continua sendo respeitada.
 
 Os volumes `moodledata_*` sao externos ao Compose para que os dados das
 instituicoes nao dependam do nome do projeto Compose. Antes de subir uma nova

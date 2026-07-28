@@ -1,5 +1,11 @@
 # Bootstrap automatico de instituicoes Moodle
 
+> Nota: o antigo orquestrador `scripts/provision-institution.py` foi removido.
+> As configuracoes executadas pelo entrypoint dentro de um container continuam
+> documentadas aqui, mas a criacao de uma nova instituicao deve seguir
+> `docs/criar-instancia-manual-moodle.md`. O cron atual esta documentado em
+> `docs/cron-moodle-systemd.md`.
+
 Este documento descreve a automacao implementada para criar uma nova instituicao Moodle em container, concluir a instalacao inicial sem navegador e gerar o token REST de integracao.
 
 ## Objetivo
@@ -18,6 +24,10 @@ Tambem deve habilitar Web Services REST, criar o servico externo restrito
 ```
 
 O token nao e impresso em logs.
+
+O mesmo bootstrap habilita por padrao a atividade BigBlueButton nativa do
+Moodle e aplica a URL, o segredo compartilhado e o algoritmo de checksum
+definidos no arquivo `.env` de cada tenant.
 
 O token pertence ao administrador primario definido em `MOODLE_ADMIN_USER`. O servico externo expoe
 somente a allowlist configurada em `MOODLE_WS_FUNCTIONS`.
@@ -80,6 +90,8 @@ moodle/bootstrap/provision.php
 Responsabilidades:
 
 - atualizar identidade do site: nome completo, nome curto, resumo e e-mail de suporte;
+- habilitar por padrao o modulo de atividade `mod_bigbluebuttonbn`;
+- configurar URL, segredo compartilhado e algoritmo da API BigBlueButton;
 - atualizar dados do admin principal;
 - forcar troca de senha do admin no primeiro login quando configurado;
 - habilitar `enablewebservices`;
@@ -101,22 +113,10 @@ core_user_create_users
 enrol_manual_enrol_users
 ```
 
-### 3. Gerador de instituicao por JSON
+### 3. Criacao da instituicao
 
-Arquivo:
-
-```text
-scripts/provision-institution.py
-```
-
-Esse script transforma um JSON de instituicao nos arquivos e recursos necessarios para o tenant.
-
-Ele atualiza, de forma idempotente:
-
-- `docker-compose.instituicoes.yml`;
-- `proxy/Caddyfile.local`;
-- `config/moodle-cron-tenants.txt`;
-- `secrets/{slug}.local.env`.
+O antigo gerador por JSON foi removido. Os arquivos do tenant sao preparados
+conforme `docs/criar-instancia-manual-moodle.md`.
 
 Opcionalmente, tambem:
 
@@ -157,41 +157,9 @@ O `slug` deve usar letras minusculas, numeros e hifens. Ele nao pode comecar ou 
 
 ## Como criar uma instituicao
 
-Crie um arquivo JSON, por exemplo:
-
-```text
-/tmp/escola-h.json
-```
-
-Execute o provisionamento completo:
-
-```sh
-scripts/provision-institution.py /tmp/escola-h.json --apply-all
-```
-
-Esse comando:
-
-1. adiciona o servico `moodle_{slug_com_underscore}` ao Compose;
-2. adiciona o volume `moodledata_{slug_com_underscore}`;
-3. adiciona a rota `/i/{slug}` ao Caddy;
-4. adiciona o container ao cron centralizado;
-5. cria `secrets/{slug}.local.env`;
-6. cria banco e usuario no MariaDB;
-7. rebuilda a imagem Moodle local;
-8. sobe o container;
-9. reinicia o proxy.
-
-Para gerar apenas os arquivos sem executar Docker:
-
-```sh
-scripts/provision-institution.py /tmp/escola-h.json
-```
-
-Para simular sem escrever nada:
-
-```sh
-scripts/provision-institution.py /tmp/escola-h.json --dry-run --apply-all
-```
+O orquestrador antigo foi removido. Siga
+`docs/criar-instancia-manual-moodle.md`. O servico da instituicao deve receber
+o label `com.w3soft.moodle.role=tenant`; nao crie um container `_cron`.
 
 ## Secrets gerados
 
@@ -199,12 +167,28 @@ O arquivo `secrets/{slug}.local.env` inclui:
 
 - configuracao de URL, banco, Redis, slug e tenant ID;
 - variaveis de bootstrap do site;
+- configuracao e credenciais do BigBlueButton;
 - credenciais iniciais do admin;
 - configuracao do servico REST e caminho do token.
 
 A senha do admin e gerada automaticamente quando o arquivo ainda nao existe. O script preserva valores sensiveis existentes em reexecucoes.
 
 Importante: as senhas geradas incluem caractere nao alfanumerico, porque a politica padrao do Moodle exige pelo menos um caractere como `!`, `*`, `-` ou `#`.
+
+Preencha as credenciais retornadas por `bbb-conf --secret` antes de iniciar o
+tenant:
+
+```dotenv
+MOODLE_BBB_ENABLED=1
+MOODLE_BBB_SERVER_URL=https://bbb.exemplo.com/bigbluebutton/
+MOODLE_BBB_SHARED_SECRET=troque-pelo-segredo-do-servidor
+MOODLE_BBB_CHECKSUM_ALGORITHM=SHA256
+```
+
+`MOODLE_BBB_ENABLED` assume `1` quando omitido. URL e segredo devem ser
+informados juntos. Para compatibilidade com tenants existentes, quando ambos
+estao vazios o modulo continua habilitado e o bootstrap registra um aviso sem
+impedir a inicializacao. O segredo nunca e escrito nos logs.
 
 ## Idempotencia
 
@@ -215,7 +199,7 @@ Comportamento esperado:
 - se o servico ja existe no Compose, nao duplica;
 - se o volume ja existe no Compose, nao duplica;
 - se a rota ja existe no Caddyfile, nao duplica;
-- se o container ja esta no arquivo de cron, nao duplica;
+- o scheduler descobre automaticamente containers ativos com o label de tenant;
 - se o secret ja existe, valores sensiveis existentes sao preservados;
 - se o banco ja existe, o comando SQL mantem banco, usuario e grants atualizados;
 - se o Moodle ja esta instalado, o entrypoint pula `install_database.php`;

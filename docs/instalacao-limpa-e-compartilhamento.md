@@ -309,8 +309,8 @@ secrets/escola-a.local.env
 secrets/escola-b.local.env
 ```
 
-Esses arquivos podem ser criados manualmente ou pelo script
-`scripts/provision-institution.py`.
+Esses arquivos sao criados manualmente conforme
+`docs/criar-instancia-manual-moodle.md`.
 
 ## 9. Opcao A: subir ambiente simples do zero
 
@@ -389,34 +389,10 @@ Crie um arquivo JSON temporario com os dados da instituicao:
 }
 ```
 
-Salve como, por exemplo:
-
-```text
-tmp/escola-a.json
-```
-
-Execute:
-
-```bash
-python3 scripts/provision-institution.py tmp/escola-a.json --apply-all
-```
-
-No Windows, se `python3` nao existir, tente:
-
-```powershell
-python scripts/provision-institution.py tmp/escola-a.json --apply-all
-```
-
-Esse comando:
-
-- atualiza `docker-compose.instituicoes.yml`;
-- atualiza `proxy/Caddyfile.local`;
-- atualiza `config/moodle-cron-tenants.txt`;
-- cria `secrets/escola-a.local.env`;
-- cria o banco e usuario no MariaDB;
-- reconstrui a imagem Moodle;
-- sobe o container da instituicao;
-- reinicia o proxy.
+O script `scripts/provision-institution.py` foi removido. Para uma instalacao
+nova, siga `docs/criar-instancia-manual-moodle.md`. Inclua o label
+`com.w3soft.moodle.role=tenant` no servico da instituicao; o scheduler do host a
+descobrira automaticamente.
 
 ### 10.3. Subir instituicoes ja declaradas no Compose
 
@@ -444,8 +420,7 @@ http://localhost:8088/i/escola-a
 
 ## 11. Criar bancos manualmente, se necessario
 
-Se nao usar `scripts/provision-institution.py --apply-all`, crie o banco da
-instituicao manualmente.
+Crie o banco da instituicao manualmente.
 
 Exemplo para `escola-a`:
 
@@ -561,7 +536,7 @@ Para multi-instituicao:
 
 ```bash
 docker compose -f docker-compose.infra.yml up -d
-python3 scripts/provision-institution.py tmp/escola-a.json --apply-all
+docker compose -f docker-compose.instituicoes.yml up -d
 ```
 
 Acesse:

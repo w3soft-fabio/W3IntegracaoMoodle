@@ -1,5 +1,9 @@
 # Passo 2: Transformar `config.php` em configuracao por variaveis
 
+> Nota de arquitetura: as referencias deste documento ao container de cron
+> descrevem a stack antiga. A arquitetura multi-instituicao atual executa o
+> cron pelo host conforme `docs/cron-moodle-systemd.md`.
+
 ## Objetivo deste passo
 
 Neste passo, o objetivo e remover valores fixos do arquivo `moodle/config.php` e fazer o Moodle ler suas configuracoes a partir de variaveis de ambiente.
@@ -1026,4 +1030,3 @@ Ao final deste passo, confirme:
 Depois deste passo, o projeto continua funcionando como antes para uma unica instalacao local, mas com uma diferenca importante: a configuracao do Moodle passa a vir de variaveis de ambiente.
 
 Essa mudanca e pequena, mas e uma base essencial para os proximos passos da arquitetura multi-instituicao.
-

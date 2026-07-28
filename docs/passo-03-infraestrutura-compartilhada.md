@@ -1,5 +1,9 @@
 # Passo 3: Separar a infraestrutura compartilhada
 
+> Nota de arquitetura: as referencias deste documento ao container de cron
+> descrevem a stack antiga. A arquitetura multi-instituicao atual executa o
+> cron pelo host conforme `docs/cron-moodle-systemd.md`.
+
 ## Objetivo deste passo
 
 Neste passo, o objetivo e separar os servicos de infraestrutura que serao compartilhados entre varias instituicoes Moodle.
@@ -1336,4 +1340,3 @@ Considere este passo concluido quando todos os itens abaixo estiverem verdadeiro
 Depois deste passo, a infraestrutura compartilhada estara pronta localmente.
 
 O proximo passo tecnico e criar bancos e usuarios por instituicao dentro do MariaDB compartilhado. Isso corresponde ao Passo 4 da arquitetura geral.
-

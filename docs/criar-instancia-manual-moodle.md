@@ -39,14 +39,13 @@ e o Redis devem ficar `healthy`.
 
 ## Arquivos que devem ser criados ou modificados
 
-Para cada instituicao, modifique estes quatro arquivos:
+Para cada instituicao, modifique estes tres arquivos:
 
 | Arquivo | Alteracao |
 | --- | --- |
 | `secrets/escola-nova.local.env` | Criar as variaveis e credenciais exclusivas da instituicao. |
-| `docker-compose.instituicoes.yml` | Adicionar o servico Moodle e seu volume persistente. |
+| `docker-compose.instituicoes.yml` | Adicionar o servico Moodle, o label de tenant e seu volume persistente. |
 | `proxy/Caddyfile.local` | Adicionar a rota publica e o proxy para o container. |
-| `config/moodle-cron-tenants.txt` | Adicionar o nome do container ao cron centralizado. |
 
 Nao modifique `docker-compose.infra.yml` para incluir uma escola: ele contem
 apenas os servicos compartilhados. Tambem nao altere `moodle/config.php` ou a
@@ -133,6 +132,8 @@ services:
       - moodledata_escola_nova:/var/www/moodledata
     networks:
       - moodle_net
+    labels:
+      com.w3soft.moodle.role: tenant
     cpus: "1.0"
     mem_limit: 1.5g
     mem_reservation: 512m
@@ -184,17 +185,17 @@ Valide a configuracao antes de reiniciar o proxy:
 docker exec moodle_proxy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 ```
 
-## 4. Registrar o cron centralizado
+## 4. Confirmar a descoberta pelo cron centralizado
 
-Acrescente uma linha em `config/moodle-cron-tenants.txt`:
+Nao existe lista manual. Depois de subir o container, o servico do host o
+descobrira pelo label `com.w3soft.moodle.role=tenant`.
 
-```text
-moodle_escola_nova
+Confira com:
+
+```sh
+sudo /usr/local/sbin/moodle-cron-scheduler --discover
+sudo /usr/local/sbin/moodle-cron-scheduler --dry-run
 ```
-
-Use exatamente o valor de `container_name`. Isso nao cria o cron por si so,
-mas inclui a instituicao nas proximas execucoes de
-`scripts/run-moodle-crons.sh` ou `scripts/run-moodle-crons-distributed.sh`.
 
 ## 5. Criar o banco e o usuario MariaDB
 
@@ -304,7 +305,7 @@ docker exec moodle_escola_nova sh -lc 'test -s /var/www/moodledata/w3soft/ws-tok
 E execute o cron manualmente uma vez:
 
 ```sh
-./scripts/run-moodle-crons.sh moodle_escola_nova
+docker exec -u www-data moodle_escola_nova php /var/www/html/admin/cli/cron.php --keep-alive=0
 ```
 
 ## Diagnostico rapido de 502
@@ -333,7 +334,8 @@ Casos comuns:
 - [ ] `secrets/escola-nova.local.env` criado, com permissao `600`.
 - [ ] Servico e volume adicionados em `docker-compose.instituicoes.yml`.
 - [ ] Rota e redirect adicionados em `proxy/Caddyfile.local`.
-- [ ] `moodle_escola_nova` adicionado em `config/moodle-cron-tenants.txt`.
+- [ ] Label `com.w3soft.moodle.role=tenant` aplicado ao container.
+- [ ] `moodle_escola_nova` aparece na descoberta do scheduler.
 - [ ] Banco, usuario e grant criados no MariaDB.
 - [ ] Bootstrap concluido sem reiniciar o container.
 - [ ] URL `http://localhost:8088/i/escola-nova/` acessivel.

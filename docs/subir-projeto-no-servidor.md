@@ -77,11 +77,13 @@ Defina tambem o idioma inicial do Moodle para portugues do Brasil:
 
 ```text
 MOODLE_DEFAULT_LANG=pt_br
+MOODLE_AUTO_DETECT_LANG=0
 ```
 
-O bootstrap persiste esse idioma como padrao global da instituicao. A
-preferencia individual de idioma de um usuario autenticado continua sendo
-respeitada.
+O bootstrap persiste esse idioma como padrao global da instituicao e, com a
+autodeteccao desabilitada, a preferencia de idioma do navegador nao troca a
+tela publica para ingles. A preferencia individual de idioma de um usuario
+autenticado continua sendo respeitada.
 
 Os volumes `moodledata_*` sao externos ao Compose para que os dados das
 instituicoes nao dependam do nome do projeto Compose. Antes de subir uma nova
@@ -315,61 +317,53 @@ docker logs --tail=120 moodle_escola_a
 
 ## 14. Preparar cron centralizado
 
-Crie a pasta de logs:
+Todos os containers de instituicao precisam do label:
+
+```yaml
+labels:
+  com.w3soft.moodle.role: tenant
+```
+
+Recrie os tenants para aplicar o label e confira a descoberta:
 
 ```sh
-mkdir -p logs/moodle-cron
+docker compose -f docker-compose.instituicoes.yml up -d
+sudo ./scripts/moodle-cron-scheduler.sh --discover
 ```
 
-Garanta permissao de execucao nos scripts:
+Instale os arquivos do servico:
 
 ```sh
-chmod +x scripts/run-moodle-crons.sh scripts/run-moodle-crons-distributed.sh
+sudo install -o root -g root -m 0750 scripts/moodle-cron-scheduler.sh /usr/local/sbin/moodle-cron-scheduler
+sudo install -o root -g root -m 0644 config/moodle-cron-scheduler.env.example /etc/default/moodle-cron-scheduler
+sudo install -o root -g root -m 0644 systemd/moodle-cron-scheduler.service /etc/systemd/system/moodle-cron-scheduler.service
 ```
 
-Confira se as instituicoes estao listadas em:
-
-```text
-config/moodle-cron-tenants.txt
-```
-
-Teste o distribuidor de cron:
+Confira o balanceamento sem executar PHP:
 
 ```sh
-./scripts/run-moodle-crons-distributed.sh
+sudo /usr/local/sbin/moodle-cron-scheduler --dry-run
 ```
 
-Confira os logs:
+## 15. Ativar o cron no servidor
+
+Nao adicione uma entrada no `crontab`. Ative o servico permanente:
 
 ```sh
-tail -n 80 logs/moodle-cron/distributor.log
+sudo systemd-analyze verify /etc/systemd/system/moodle-cron-scheduler.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now moodle-cron-scheduler.service
+sudo systemctl status moodle-cron-scheduler.service
 ```
 
-## 15. Agendar o cron no servidor
-
-Abra o crontab:
+Confira os eventos:
 
 ```sh
-crontab -e
+sudo journalctl -u moodle-cron-scheduler.service -f
 ```
 
-Adicione a linha abaixo, ajustando o caminho do projeto:
-
-```cron
-* * * * * cd /caminho/do/projeto/moodle-docker && ./scripts/run-moodle-crons-distributed.sh
-```
-
-Salve e confira:
-
-```sh
-crontab -l
-```
-
-Apos alguns minutos, verifique:
-
-```sh
-tail -n 80 logs/moodle-cron/distributor.log
-```
+O procedimento completo, incluindo remocao de agendadores antigos e rollback,
+esta em `docs/cron-moodle-systemd.md`.
 
 ## 16. Comandos uteis de operacao
 
@@ -448,4 +442,4 @@ docker compose -f docker-compose.instituicoes.yml up -d --force-recreate
 - Containers Moodle das instituicoes em execucao.
 - Acesso HTTP/HTTPS testado.
 - Cron manual testado.
-- Cron centralizado configurado no `crontab`.
+- Cron centralizado configurado no `systemd`.

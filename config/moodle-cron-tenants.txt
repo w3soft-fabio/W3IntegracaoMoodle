@@ -1,4 +1,0 @@
-# Fonte da verdade para o cron centralizado do Moodle.
-# Uma instituicao por linha, usando o nome do container Docker.
-
-moodle_escola_modelo

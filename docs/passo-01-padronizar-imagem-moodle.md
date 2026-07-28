@@ -1,5 +1,9 @@
 # Passo 1: Padronizar a imagem Docker do Moodle
 
+> Nota de arquitetura: as referencias deste documento ao container
+> `moodle_cron` descrevem a stack antiga. A arquitetura multi-instituicao atual
+> executa o cron pelo host conforme `docs/cron-moodle-systemd.md`.
+
 ## Objetivo deste passo
 
 Neste primeiro passo, o objetivo e transformar a imagem Docker do Moodle em um artefato padronizado, versionado e reutilizavel.

@@ -411,17 +411,12 @@ Documentacao detalhada deste passo:
 docs/passo-08-cron-centralizado.md
 ```
 
-O projeto atual possui um servico `cron` permanente. Em varias instituicoes, nao e recomendado criar um container de cron permanente para cada uma.
+O projeto usa `scripts/moodle-cron-scheduler.sh`, supervisionado pelo
+`systemd`. Ele descobre os tenants por label, distribui as execucoes em 0s,
+15s, 30s e 45s e impede sobreposicao por tenant.
 
-Criar um script central, por exemplo `scripts/run-moodle-crons.sh`, que execute:
-
-```sh
-docker exec moodle_escola_a php /var/www/html/admin/cli/cron.php
-docker exec moodle_escola_b php /var/www/html/admin/cli/cron.php
-docker exec moodle_escola_c php /var/www/html/admin/cli/cron.php
-```
-
-Agendar esse script no host, preferencialmente distribuindo as execucoes ao longo do minuto:
+Nao crie um container cron por instituicao e nao adicione chamadas ao
+`crontab`. Consulte `docs/cron-moodle-systemd.md`.
 
 ```text
 00s: escolas 1 a 5

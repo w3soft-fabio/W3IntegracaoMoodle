@@ -24,6 +24,7 @@ secrets/*.env
 /sessions/
 /temp/
 /trashdir/
+proxy/Caddyfile.local
 
 # Docker e banco de dados locais
 docker-compose.instituicoes.yml

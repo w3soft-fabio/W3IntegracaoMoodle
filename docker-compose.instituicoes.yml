@@ -14,22 +14,6 @@ services:
     cpus: "1.0"
     mem_limit: 1.5g
     mem_reservation: 512m
-
-  moodle_escola_modelo_cron:
-    image: w3soft/moodle:2026.07.1-local
-    container_name: moodle_escola_modelo_cron
-    restart: unless-stopped
-    env_file:
-      - ./secrets/escola-modelo.local.env
-    volumes:
-      - moodledata_escola_modelo:/var/www/moodledata
-    networks:
-      - moodle_net
-    command: >
-      sh -c 'while true; do
-        runuser -u www-data -- php /var/www/html/admin/cli/cron.php --keep-alive=0;
-        sleep 60;
-      done'
 volumes:
   moodledata_escola_modelo:
     name: moodledata_escola_modelo

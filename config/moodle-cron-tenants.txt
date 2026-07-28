@@ -1,3 +1,0 @@
-# Lista opcional para os scripts manuais/legados de cron centralizado.
-# Os tenants provisionados atualmente usam o container <tenant>_cron e nao
-# devem ser adicionados aqui, para evitar execucao duplicada.

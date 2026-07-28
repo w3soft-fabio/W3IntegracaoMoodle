@@ -11,6 +11,8 @@ services:
       - moodledata_escola_modelo:/var/www/moodledata
     networks:
       - moodle_net
+    labels:
+      com.w3soft.moodle.role: tenant
     cpus: "1.0"
     mem_limit: 1.5g
     mem_reservation: 512m

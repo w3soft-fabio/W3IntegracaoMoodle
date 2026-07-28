@@ -1,5 +1,11 @@
 # Bootstrap automatico de instituicoes Moodle
 
+> Nota: o antigo orquestrador `scripts/provision-institution.py` foi removido.
+> As configuracoes executadas pelo entrypoint dentro de um container continuam
+> documentadas aqui, mas a criacao de uma nova instituicao deve seguir
+> `docs/criar-instancia-manual-moodle.md`. O cron atual esta documentado em
+> `docs/cron-moodle-systemd.md`.
+
 Este documento descreve a automacao implementada para criar uma nova instituicao Moodle em container, concluir a instalacao inicial sem navegador e gerar o token REST de integracao.
 
 ## Objetivo
@@ -107,21 +113,10 @@ core_user_create_users
 enrol_manual_enrol_users
 ```
 
-### 3. Gerador de instituicao por JSON
+### 3. Criacao da instituicao
 
-Arquivo:
-
-```text
-scripts/provision-institution.py
-```
-
-Esse script transforma um JSON de instituicao nos arquivos e recursos necessarios para o tenant.
-
-Ele atualiza, de forma idempotente:
-
-- `docker-compose.instituicoes.yml`;
-- `proxy/Caddyfile.local`;
-- `secrets/{slug}.local.env`.
+O antigo gerador por JSON foi removido. Os arquivos do tenant sao preparados
+conforme `docs/criar-instancia-manual-moodle.md`.
 
 Opcionalmente, tambem:
 
@@ -162,41 +157,9 @@ O `slug` deve usar letras minusculas, numeros e hifens. Ele nao pode comecar ou 
 
 ## Como criar uma instituicao
 
-Crie um arquivo JSON, por exemplo:
-
-```text
-/tmp/escola-h.json
-```
-
-Execute o provisionamento completo:
-
-```sh
-scripts/provision-institution.py /tmp/escola-h.json --apply-all
-```
-
-Esse comando:
-
-1. adiciona o servico `moodle_{slug_com_underscore}` ao Compose;
-2. adiciona o volume `moodledata_{slug_com_underscore}`;
-3. adiciona a rota `/i/{slug}` ao Caddy;
-4. cria o servico acompanhante `moodle_{slug_com_underscore}_cron`, que executa o cron a cada minuto;
-5. cria `secrets/{slug}.local.env`;
-6. cria banco e usuario no MariaDB;
-7. rebuilda a imagem Moodle local;
-8. sobe o Moodle e seu container cron;
-9. reinicia o proxy.
-
-Para gerar apenas os arquivos sem executar Docker:
-
-```sh
-scripts/provision-institution.py /tmp/escola-h.json
-```
-
-Para simular sem escrever nada:
-
-```sh
-scripts/provision-institution.py /tmp/escola-h.json --dry-run --apply-all
-```
+O orquestrador antigo foi removido. Siga
+`docs/criar-instancia-manual-moodle.md`. O servico da instituicao deve receber
+o label `com.w3soft.moodle.role=tenant`; nao crie um container `_cron`.
 
 ## Secrets gerados
 
@@ -236,7 +199,7 @@ Comportamento esperado:
 - se o servico ja existe no Compose, nao duplica;
 - se o volume ja existe no Compose, nao duplica;
 - se a rota ja existe no Caddyfile, nao duplica;
-- se o container ja esta no arquivo de cron, nao duplica;
+- o scheduler descobre automaticamente containers ativos com o label de tenant;
 - se o secret ja existe, valores sensiveis existentes sao preservados;
 - se o banco ja existe, o comando SQL mantem banco, usuario e grants atualizados;
 - se o Moodle ja esta instalado, o entrypoint pula `install_database.php`;

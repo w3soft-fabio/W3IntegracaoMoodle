@@ -447,23 +447,23 @@ automaticamente quando o Moodle inicia normalmente.
 
 ### Cron centralizado do projeto
 
-Executar somente uma ou mais instituicoes:
+Descobrir os tenants ativos:
 
 ```sh
-./scripts/run-moodle-crons.sh moodle_escola_modelo
+sudo /usr/local/sbin/moodle-cron-scheduler --discover
 ```
 
-Executar a lista de `config/moodle-cron-tenants.txt`, distribuindo a carga:
+Conferir o balanceamento:
 
 ```sh
-./scripts/run-moodle-crons-distributed.sh
+sudo /usr/local/sbin/moodle-cron-scheduler --dry-run
 ```
 
-Ver os logs gerados pelos scripts:
+Ver o estado e os logs:
 
 ```sh
-tail -n 100 logs/moodle-cron/distributor.log
-tail -n 100 logs/moodle-cron/moodle_escola_modelo.log
+sudo systemctl status moodle-cron-scheduler.service
+sudo journalctl -u moodle-cron-scheduler.service --since '1 hour ago'
 ```
 
 ## 10. MariaDB
@@ -530,66 +530,22 @@ curl -I http://localhost:8088/i/escola-modelo/
 
 ## 12. Criar uma nova instituicao
 
-O fluxo recomendado e o script idempotente
-`scripts/provision-institution.py`. Primeiro crie um JSON fora da pasta
-versionada, por exemplo:
+O antigo `scripts/provision-institution.py` foi removido. Siga
+`docs/criar-instancia-manual-moodle.md`.
 
-```json
-{
-  "displayName": "Escola Exemplo",
-  "slug": "escola-exemplo",
-  "tenantId": "escola-exemplo-local",
-  "databasePassword": "troque-por-uma-senha-forte",
-  "publicUrl": "http://localhost:8088/i/escola-exemplo",
-  "cpu": "1.0",
-  "memoryLimit": "1.5g",
-  "memoryReservation": "512m"
-}
+Ao declarar o servico no Compose, inclua obrigatoriamente:
+
+```yaml
+labels:
+  com.w3soft.moodle.role: tenant
 ```
 
-Antes de aplicar, simule todas as acoes:
+Depois de subir a instituicao, confirme que o scheduler a encontrou:
 
 ```sh
-./scripts/provision-institution.py /tmp/escola-exemplo.json --dry-run --apply-all
+sudo /usr/local/sbin/moodle-cron-scheduler --discover
+sudo /usr/local/sbin/moodle-cron-scheduler --dry-run
 ```
-
-Preparar somente os arquivos:
-
-```sh
-./scripts/provision-institution.py /tmp/escola-exemplo.json
-```
-
-Criar banco/usuario, construir a imagem, subir o tenant e reiniciar o proxy:
-
-```sh
-./scripts/provision-institution.py /tmp/escola-exemplo.json --apply-all
-```
-
-A infraestrutura precisa estar ativa antes de `--create-db` ou `--apply-all`:
-
-```sh
-docker compose -f docker-compose.infra.yml up -d
-```
-
-Outras opcoes do script:
-
-```sh
-./scripts/provision-institution.py --help
-./scripts/provision-institution.py /tmp/escola-exemplo.json --create-db
-./scripts/provision-institution.py /tmp/escola-exemplo.json --rebuild-image
-./scripts/provision-institution.py /tmp/escola-exemplo.json --up
-```
-
-O script altera estes arquivos:
-
-```text
-docker-compose.instituicoes.yml
-proxy/Caddyfile.local
-config/moodle-cron-tenants.txt
-secrets/{slug}.local.env
-```
-
-Ele nao possui uma operacao inversa para remover uma instituicao.
 
 ## 13. Volumes e persistencia
 
@@ -645,11 +601,11 @@ Ative manutencao para evitar mudancas durante o backup:
 docker exec -u www-data moodle_escola_modelo php /var/www/html/admin/cli/maintenance.php --enable
 ```
 
-Pause temporariamente o agendamento de
-`scripts/run-moodle-crons-distributed.sh`, aguarde qualquer cron ativo terminar
-e pare o tenant para obter a copia mais consistente:
+Pare temporariamente o scheduler, aguarde qualquer cron ativo terminar e pare o
+tenant para obter a copia mais consistente:
 
 ```sh
+sudo systemctl stop moodle-cron-scheduler.service
 docker compose -f docker-compose.instituicoes.yml stop moodle_escola_modelo
 ```
 
@@ -676,6 +632,7 @@ Suba o tenant, desative a manutencao e reative o agendamento do cron:
 ```sh
 docker compose -f docker-compose.instituicoes.yml up -d moodle_escola_modelo
 docker exec -u www-data moodle_escola_modelo php /var/www/html/admin/cli/maintenance.php --disable
+sudo systemctl start moodle-cron-scheduler.service
 ```
 
 Confira os arquivos sem mostrar seu conteudo:

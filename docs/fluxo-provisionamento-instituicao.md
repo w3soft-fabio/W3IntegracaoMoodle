@@ -1,5 +1,10 @@
 # Fluxo de provisionamento de uma nova instituicao Moodle
 
+> Documento historico: o script `scripts/provision-institution.py` descrito
+> abaixo foi removido no commit `f91f285`. Para o fluxo atual, use
+> `docs/criar-instancia-manual-moodle.md`. As secoes de cron deste documento
+> foram substituidas por `docs/cron-moodle-systemd.md`.
+
 Este documento explica o fluxo de criacao de uma nova instituicao a partir do script
 `scripts/provision-institution.py`, usando `tmp/escola-i.json` como exemplo.
 

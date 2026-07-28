@@ -26,6 +26,7 @@ secrets/*.env
 /trashdir/
 
 # Docker e banco de dados locais
+docker-compose.instituicoes.yml
 db_data/
 mysql/
 mariadb/

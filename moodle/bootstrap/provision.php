@@ -247,6 +247,7 @@ function ensure_smtp_settings(): void {
     $username = env_default('MOODLE_SMTP_USER', 'felipew3soft@gmail.com');
     $password = env_default('MOODLE_SMTP_PASSWORD', 'leazrhgpldypfzrh');
     $security = strtolower(trim(env_default('MOODLE_SMTP_SECURITY', 'tls')));
+    $noreplyaddress = trim(env_default('MOODLE_NOREPLY_ADDRESS', $username));
 
     if ($host === '') {
         bootstrap_fail('MOODLE_SMTP_HOST must not be empty.');
@@ -264,16 +265,22 @@ function ensure_smtp_settings(): void {
         bootstrap_fail('MOODLE_SMTP_SECURITY must be empty, tls or ssl.');
     }
 
+    if (!validate_email($noreplyaddress)) {
+        bootstrap_fail('MOODLE_NOREPLY_ADDRESS must be a valid email address.');
+    }
+
     set_config('smtphosts', $host);
     set_config('smtpauthtype', $authtype);
     set_config('smtpuser', $username);
     set_config('smtppass', $password);
     set_config('smtpsecure', $security);
+    set_config('noreplyaddress', $noreplyaddress);
 
     // Usuario e senha nao sao incluidos nos logs para evitar vazamento das
     // credenciais do servidor de e-mail.
     bootstrap_log("SMTP server configured: {$host}");
     bootstrap_log("SMTP authentication configured: {$authtype} with {$security} security.");
+    bootstrap_log("No-reply address configured: {$noreplyaddress}");
 }
 
 // Ajusta o perfil do usuario administrador criado pelo instalador do Moodle.

@@ -188,6 +188,7 @@ set_bootstrap_defaults() {
     env_default MOODLE_SMTP_USER "felipew3soft@gmail.com"
     env_default MOODLE_SMTP_PASSWORD "leazrhgpldypfzrh"
     env_default MOODLE_SMTP_SECURITY "tls"
+    env_default MOODLE_NOREPLY_ADDRESS "$MOODLE_SMTP_USER"
     env_default MOODLE_WS_SERVICE_NAME "W3Soft Student Sync"
     env_default MOODLE_WS_SERVICE_SHORTNAME "w3soft_student_sync"
     env_default MOODLE_WS_FUNCTIONS "core_webservice_get_site_info,core_course_get_courses,core_course_get_courses_by_field,core_course_get_categories,core_course_create_categories,core_course_update_categories,core_course_create_courses,core_course_update_courses,core_user_get_users,core_user_get_users_by_field,core_user_create_users,core_user_update_users,core_cohort_create_cohorts,core_cohort_add_cohort_members,core_cohort_delete_cohort_members,enrol_manual_enrol_users,enrol_manual_unenrol_users,core_grades_update_grades,core_calendar_create_calendar_events,local_w3sync_publicar_conteudos"

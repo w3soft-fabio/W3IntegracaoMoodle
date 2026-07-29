@@ -210,10 +210,11 @@ MOODLE_SMTP_AUTH_TYPE=LOGIN
 MOODLE_SMTP_USER=felipew3soft@gmail.com
 MOODLE_SMTP_PASSWORD=defina-a-senha-do-aplicativo
 MOODLE_SMTP_SECURITY=tls
+MOODLE_NOREPLY_ADDRESS=felipew3soft@gmail.com
 ```
 
 O bootstrap persiste esses valores nas configuracoes `smtphosts`,
-`smtpauthtype`, `smtpuser`, `smtppass` e `smtpsecure` do Moodle. A senha SMTP
+`smtpauthtype`, `smtpuser`, `smtppass`, `smtpsecure` e `noreplyaddress` do Moodle. A senha SMTP
 nunca e escrita nos logs.
 
 ## Idempotencia

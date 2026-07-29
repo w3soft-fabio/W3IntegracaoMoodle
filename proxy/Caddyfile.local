@@ -1,0 +1,78 @@
+:80 {
+	@home path /
+	@index path /index.html
+	@unauthorizedPage path /401.html
+	@tenantescolamodelo path /i/escola-modelo/*
+
+	@tenantescolateste path /i/escola-teste/*
+	@tenantcolegioquinzedenovembro path /i/colegio-15-de-novembro/*
+	@tenantcolegiomonsenhoradelmardamotavalenca path /i/colegio-monsenhor-adelmar-da-mota-valenca/*
+	@tenantcolegiomodelo path /i/colegio-modelo/*
+	@tenantcolegiopresbiterianoquinzedenovembro path /i/colegio-presbiteriano-quinze-de-novembro/*
+	redir @home /index.html
+	redir /i/escola-modelo /i/escola-modelo/
+
+	redir /i/escola-teste /i/escola-teste/
+	redir /i/colegio-15-de-novembro /i/colegio-15-de-novembro/
+	redir /i/colegio-monsenhor-adelmar-da-mota-valenca /i/colegio-monsenhor-adelmar-da-mota-valenca/
+	redir /i/colegio-modelo /i/colegio-modelo/
+	redir /i/colegio-presbiteriano-quinze-de-novembro /i/colegio-presbiteriano-quinze-de-novembro/
+	handle @index {
+		root * /srv
+		file_server
+	}
+
+	handle @unauthorizedPage {
+		root * /srv
+		file_server
+	}
+
+	handle @tenantescolamodelo {
+		reverse_proxy moodle_escola_modelo:80 {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+	handle @tenantescolateste {
+		reverse_proxy moodle_escola_teste:80 {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+
+	handle @tenantcolegioquinzedenovembro {
+		reverse_proxy moodle_colegio_quinze_de_novembro:80 {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+
+	handle @tenantcolegiomonsenhoradelmardamotavalenca {
+		reverse_proxy moodle_colegio_monsenhor_adelmar_da_mota_valenca:80 {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+
+	handle @tenantcolegiomodelo {
+		reverse_proxy moodle_colegio_modelo:80 {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+
+	handle @tenantcolegiopresbiterianoquinzedenovembro {
+		reverse_proxy moodle_colegio_presbiteriano_quinze_de_novembro:80 {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+
+	handle {
+		root * /srv
+		rewrite * /401.html
+		file_server {
+			status 401
+		}
+	}
+}

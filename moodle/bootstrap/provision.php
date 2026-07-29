@@ -155,6 +155,7 @@ function ensure_language_settings(): void {
 // tenham o modulo oculto depois de uma atualizacao.
 function ensure_bigbluebutton_settings(): void {
     $enabled = env_bool('MOODLE_BBB_ENABLED', true);
+    $recordingdefault = env_bool('MOODLE_BBB_RECORDING_DEFAULT', false);
 
     if (!class_exists(\core\plugininfo\mod::class)) {
         bootstrap_fail('Moodle activity plugin manager is unavailable.');
@@ -165,6 +166,16 @@ function ensure_bigbluebutton_settings(): void {
     } catch (Throwable $exception) {
         bootstrap_fail('Could not configure the BigBlueButton activity module: ' . $exception->getMessage());
     }
+
+    // O modulo continua disponivel para videoconferencias, mas novas
+    // atividades nao permitem gravacao por padrao. A variavel de ambiente
+    // possibilita uma excecao explicita por instituicao.
+    set_config('bigbluebuttonbn_recording_default', $recordingdefault ? '1' : '0');
+    bootstrap_log(
+        'BigBlueButton recording is '
+        . ($recordingdefault ? 'enabled' : 'disabled')
+        . ' by default.'
+    );
 
     if (!$enabled) {
         bootstrap_log('BigBlueButton activity module is disabled by MOODLE_BBB_ENABLED.');
@@ -225,6 +236,44 @@ function ensure_bigbluebutton_settings(): void {
 
     bootstrap_log("BigBlueButton server configured: {$serverurl}");
     bootstrap_log("BigBlueButton checksum algorithm configured: {$algorithm}.");
+}
+
+// Configura o servidor de saida usado pelo Moodle para notificacoes, redefinicao
+// de senha e demais mensagens. Os valores podem ser sobrescritos por tenant,
+// mas os defaults garantem a mesma configuracao para todas as instituicoes.
+function ensure_smtp_settings(): void {
+    $host = trim(env_default('MOODLE_SMTP_HOST', 'smtp.gmail.com:587'));
+    $authtype = strtoupper(trim(env_default('MOODLE_SMTP_AUTH_TYPE', 'LOGIN')));
+    $username = env_default('MOODLE_SMTP_USER', 'felipew3soft@gmail.com');
+    $password = env_default('MOODLE_SMTP_PASSWORD', 'leazrhgpldypfzrh');
+    $security = strtolower(trim(env_default('MOODLE_SMTP_SECURITY', 'tls')));
+
+    if ($host === '') {
+        bootstrap_fail('MOODLE_SMTP_HOST must not be empty.');
+    }
+
+    $allowedauthtypes = ['LOGIN', 'PLAIN', 'NTLM', 'CRAM-MD5'];
+    if (!in_array($authtype, $allowedauthtypes, true)) {
+        bootstrap_fail(
+            'MOODLE_SMTP_AUTH_TYPE must be one of: ' . implode(', ', $allowedauthtypes) . '.'
+        );
+    }
+
+    $allowedsecurity = ['', 'tls', 'ssl'];
+    if (!in_array($security, $allowedsecurity, true)) {
+        bootstrap_fail('MOODLE_SMTP_SECURITY must be empty, tls or ssl.');
+    }
+
+    set_config('smtphosts', $host);
+    set_config('smtpauthtype', $authtype);
+    set_config('smtpuser', $username);
+    set_config('smtppass', $password);
+    set_config('smtpsecure', $security);
+
+    // Usuario e senha nao sao incluidos nos logs para evitar vazamento das
+    // credenciais do servidor de e-mail.
+    bootstrap_log("SMTP server configured: {$host}");
+    bootstrap_log("SMTP authentication configured: {$authtype} with {$security} security.");
 }
 
 // Ajusta o perfil do usuario administrador criado pelo instalador do Moodle.
@@ -479,6 +528,7 @@ update_site_identity();
 ensure_access_settings();
 ensure_language_settings();
 ensure_bigbluebutton_settings();
+ensure_smtp_settings();
 $admin = update_admin_user($firstinstall);
 ensure_webservice_settings();
 // Lista de funcoes REST que farao parte do servico externo. Pode vir do

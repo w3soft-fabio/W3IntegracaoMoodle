@@ -26,8 +26,12 @@ Tambem deve habilitar Web Services REST, criar o servico externo restrito
 O token nao e impresso em logs.
 
 O mesmo bootstrap habilita por padrao a atividade BigBlueButton nativa do
-Moodle e aplica a URL, o segredo compartilhado e o algoritmo de checksum
-definidos no arquivo `.env` de cada tenant.
+Moodle, mas deixa a gravacao desabilitada por padrao. Ele tambem aplica a URL,
+o segredo compartilhado e o algoritmo de checksum definidos no arquivo `.env`
+de cada tenant.
+
+O envio de e-mails e configurado por padrao com SMTP autenticado e TLS. As
+credenciais podem ser sobrescritas no arquivo `.env` de cada tenant.
 
 O token pertence ao administrador primario definido em `MOODLE_ADMIN_USER`. O servico externo expoe
 somente a allowlist configurada em `MOODLE_WS_FUNCTIONS`.
@@ -91,7 +95,9 @@ Responsabilidades:
 
 - atualizar identidade do site: nome completo, nome curto, resumo e e-mail de suporte;
 - habilitar por padrao o modulo de atividade `mod_bigbluebuttonbn`;
+- desabilitar por padrao a gravacao de atividades BigBlueButton;
 - configurar URL, segredo compartilhado e algoritmo da API BigBlueButton;
+- configurar o servidor SMTP usado para enviar e-mails;
 - atualizar dados do admin principal;
 - forcar troca de senha do admin no primeiro login quando configurado;
 - habilitar `enablewebservices`;
@@ -168,6 +174,7 @@ O arquivo `secrets/{slug}.local.env` inclui:
 - configuracao de URL, banco, Redis, slug e tenant ID;
 - variaveis de bootstrap do site;
 - configuracao e credenciais do BigBlueButton;
+- configuracao e credenciais do servidor SMTP;
 - credenciais iniciais do admin;
 - configuracao do servico REST e caminho do token.
 
@@ -180,6 +187,7 @@ tenant:
 
 ```dotenv
 MOODLE_BBB_ENABLED=1
+MOODLE_BBB_RECORDING_DEFAULT=0
 MOODLE_BBB_SERVER_URL=https://bbb.exemplo.com/bigbluebutton/
 MOODLE_BBB_SHARED_SECRET=troque-pelo-segredo-do-servidor
 MOODLE_BBB_CHECKSUM_ALGORITHM=SHA256
@@ -189,6 +197,24 @@ MOODLE_BBB_CHECKSUM_ALGORITHM=SHA256
 informados juntos. Para compatibilidade com tenants existentes, quando ambos
 estao vazios o modulo continua habilitado e o bootstrap registra um aviso sem
 impedir a inicializacao. O segredo nunca e escrito nos logs.
+
+`MOODLE_BBB_RECORDING_DEFAULT` assume `0` quando omitido. Assim, a atividade de
+videoconferencia continua disponivel, mas a gravacao precisa ser habilitada
+explicitamente por uma instituicao que necessite desse recurso.
+
+Configuracao SMTP padrao:
+
+```dotenv
+MOODLE_SMTP_HOST=smtp.gmail.com:587
+MOODLE_SMTP_AUTH_TYPE=LOGIN
+MOODLE_SMTP_USER=felipew3soft@gmail.com
+MOODLE_SMTP_PASSWORD=defina-a-senha-do-aplicativo
+MOODLE_SMTP_SECURITY=tls
+```
+
+O bootstrap persiste esses valores nas configuracoes `smtphosts`,
+`smtpauthtype`, `smtpuser`, `smtppass` e `smtpsecure` do Moodle. A senha SMTP
+nunca e escrita nos logs.
 
 ## Idempotencia
 

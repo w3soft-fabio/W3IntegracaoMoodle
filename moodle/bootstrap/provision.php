@@ -124,6 +124,27 @@ function update_site_identity(): void {
     set_config('timezone', $timezone);
 }
 
+// Persiste o database de origem autorizado para esta instituição. A API de
+// provisionamento usa o mesmo vínculo para impedir que uma sincronização W3
+// destinada a outra instituição seja aplicada neste Moodle.
+function ensure_w3_database_settings(): void {
+    $database = env_default('MOODLE_W3_DATABASE', '');
+
+    // Instalações criadas antes deste vínculo continuam inicializando. Elas
+    // não poderão sincronizar com a W3 até serem configuradas explicitamente.
+    if ($database === '') {
+        bootstrap_log('W3 database was not configured; synchronization will remain unavailable.');
+        return;
+    }
+
+    if (!preg_match('/^[A-Za-z0-9_-]+$/', $database)) {
+        bootstrap_fail('MOODLE_W3_DATABASE contains unsupported characters.');
+    }
+
+    set_config('w3database', $database, 'local_w3sync');
+    bootstrap_log("W3 database configured: {$database}.");
+}
+
 // Exige autenticacao para acessar paginas do Moodle. Com esta configuracao, um
 // visitante que abrir a pagina inicial e redirecionado pelo proprio Moodle para
 // `login/index.php`, antes que a lista de cursos seja exibida.
@@ -532,6 +553,7 @@ $firstinstall = env_bool('MOODLE_BOOTSTRAP_FIRST_INSTALL', false);
 
 bootstrap_log('Starting tenant provisioning.');
 update_site_identity();
+ensure_w3_database_settings();
 ensure_access_settings();
 ensure_language_settings();
 ensure_bigbluebutton_settings();

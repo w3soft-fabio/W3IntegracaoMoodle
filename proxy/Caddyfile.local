@@ -9,6 +9,8 @@
 	@tenantcolegiomonsenhoradelmardamotavalenca path /i/colegio-monsenhor-adelmar-da-mota-valenca/*
 	@tenantcolegiomodelo path /i/colegio-modelo/*
 	@tenantcolegiopresbiterianoquinzedenovembro path /i/colegio-presbiteriano-quinze-de-novembro/*
+	@tenantcolegioreal path /i/colegio-real/*
+	@tenantcolegiotiradentescpm path /i/colegio-tiradentes-cpm/*
 	redir @home /index.html
 	redir /i/escola-modelo /i/escola-modelo/
 
@@ -17,6 +19,8 @@
 	redir /i/colegio-monsenhor-adelmar-da-mota-valenca /i/colegio-monsenhor-adelmar-da-mota-valenca/
 	redir /i/colegio-modelo /i/colegio-modelo/
 	redir /i/colegio-presbiteriano-quinze-de-novembro /i/colegio-presbiteriano-quinze-de-novembro/
+	redir /i/colegio-real /i/colegio-real/
+	redir /i/colegio-tiradentes-cpm /i/colegio-tiradentes-cpm/
 	handle @index {
 		root * /srv
 		file_server
@@ -63,6 +67,20 @@
 
 	handle @tenantcolegiopresbiterianoquinzedenovembro {
 		reverse_proxy moodle_colegio_presbiteriano_quinze_de_novembro:80 {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+
+	handle @tenantcolegioreal {
+		reverse_proxy moodle_colegio_real:80 {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+
+	handle @tenantcolegiotiradentescpm {
+		reverse_proxy moodle_colegio_tiradentes_cpm:80 {
 			header_up Host {upstream_hostport}
 		}
 	}

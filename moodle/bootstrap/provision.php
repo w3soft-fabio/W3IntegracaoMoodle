@@ -365,6 +365,64 @@ function ensure_webservice_settings(): void {
     }
 }
 
+// Garante que a inscricao manual usada pela API esteja habilitada e com todos
+// os defaults necessarios para o Moodle criar uma instancia valida em cursos
+// novos. Tambem repara cursos antigos criados enquanto enrol_manual/status nao
+// existia na configuracao da imagem.
+function ensure_manual_enrolment_settings(): void {
+    global $DB;
+
+    $enabled = env_bool('MOODLE_ENROL_MANUAL_ENABLED', true);
+    $roleid = (int)env_default('MOODLE_ENROL_MANUAL_ROLE_ID', '5');
+
+    if ($roleid <= 0 || !$DB->record_exists('role', ['id' => $roleid])) {
+        bootstrap_fail('MOODLE_ENROL_MANUAL_ROLE_ID must reference an existing Moodle role.');
+    }
+
+    if (!$enabled) {
+        bootstrap_fail('Manual enrolment must remain enabled for W3 synchronization.');
+    }
+
+    try {
+        \core\plugininfo\enrol::enable_plugin('manual', 1);
+    } catch (Throwable $exception) {
+        bootstrap_fail('Could not configure the manual enrolment plugin: ' . $exception->getMessage());
+    }
+
+    set_config('status', ENROL_INSTANCE_ENABLED, 'enrol_manual');
+    set_config('roleid', $roleid, 'enrol_manual');
+    set_config('enrolperiod', 0, 'enrol_manual');
+    set_config('expirynotify', 0, 'enrol_manual');
+    set_config('expirythreshold', 86400, 'enrol_manual');
+    set_config('sendcoursewelcomemessage', 0, 'enrol_manual');
+
+    $plugin = enrol_get_plugin('manual');
+    if (!$plugin) {
+        bootstrap_fail('Manual enrolment plugin is unavailable.');
+    }
+
+    $created = 0;
+    $enabledinstances = 0;
+    $courses = $DB->get_recordset_select('course', 'id <> :siteid', ['siteid' => SITEID], 'id ASC', 'id');
+    foreach ($courses as $course) {
+        $instance = $DB->get_record('enrol', ['courseid' => $course->id, 'enrol' => 'manual']);
+        if (!$instance) {
+            if (!$plugin->add_default_instance($course)) {
+                bootstrap_fail("Could not create manual enrolment for course {$course->id}.");
+            }
+            $created++;
+        } else if ((int)$instance->status !== ENROL_INSTANCE_ENABLED) {
+            $plugin->update_status($instance, ENROL_INSTANCE_ENABLED);
+            $enabledinstances++;
+        }
+    }
+    $courses->close();
+
+    bootstrap_log(
+        "Manual enrolment configured; created {$created} and enabled {$enabledinstances} course instance(s)."
+    );
+}
+
 // Cria ou atualiza o servico externo que agrupa as funcoes REST autorizadas
 // para a integracao. No Moodle, um token pertence a um usuario e a um servico.
 function ensure_service(array $functions): stdClass {
@@ -559,6 +617,7 @@ ensure_language_settings();
 ensure_bigbluebutton_settings();
 ensure_smtp_settings();
 $admin = update_admin_user($firstinstall);
+ensure_manual_enrolment_settings();
 ensure_webservice_settings();
 // Lista de funcoes REST que farao parte do servico externo. Pode vir do
 // ambiente ou cair no conjunto padrao usado pela integracao.

@@ -11,6 +11,7 @@
 	@tenantcolegiopresbiterianoquinzedenovembro path /i/colegio-presbiteriano-quinze-de-novembro/*
 	@tenantcolegioreal path /i/colegio-real/*
 	@tenantcolegiotiradentescpm path /i/colegio-tiradentes-cpm/*
+	@tenantcolegiobatistacaruaru path /i/colegio-batista-caruaru/*
 	redir @home /index.html
 	redir /i/escola-modelo /i/escola-modelo/
 
@@ -21,6 +22,7 @@
 	redir /i/colegio-presbiteriano-quinze-de-novembro /i/colegio-presbiteriano-quinze-de-novembro/
 	redir /i/colegio-real /i/colegio-real/
 	redir /i/colegio-tiradentes-cpm /i/colegio-tiradentes-cpm/
+	redir /i/colegio-batista-caruaru /i/colegio-batista-caruaru/
 	handle @index {
 		root * /srv
 		file_server
@@ -81,6 +83,13 @@
 
 	handle @tenantcolegiotiradentescpm {
 		reverse_proxy moodle_colegio_tiradentes_cpm:80 {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+
+	handle @tenantcolegiobatistacaruaru {
+		reverse_proxy moodle_colegio_batista_caruaru:80 {
 			header_up Host {upstream_hostport}
 		}
 	}

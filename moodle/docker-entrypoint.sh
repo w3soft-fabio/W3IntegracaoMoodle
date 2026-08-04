@@ -27,24 +27,6 @@ fail() {
     exit 1
 }
 
-# Define um valor padrao para uma variavel de ambiente quando ela esta vazia.
-#
-# Exemplo: `env_default MOODLE_ADMIN_USER "admin"` olha se a variavel
-# `MOODLE_ADMIN_USER` ja veio do Docker/Compose. Se nao veio, exporta o valor
-# "admin".
-#
-# O `eval` e usado porque o nome da variavel esta dentro de outra variavel
-# (`name`). Isso permite ler dinamicamente algo como `$MOODLE_ADMIN_USER`.
-env_default() {
-    name="$1"
-    default="$2"
-    eval "value=\${$name:-}"
-
-    if [ -z "$value" ]; then
-        export "$name=$default"
-    fi
-}
-
 # Garante que uma variavel de ambiente obrigatoria foi informada. Se a variavel
 # estiver vazia ou nao existir, o script para com `fail`.
 require_env() {
@@ -52,6 +34,17 @@ require_env() {
     eval "value=\${$name:-}"
 
     if [ -z "$value" ]; then
+        fail "Missing required environment variable: $name"
+    fi
+}
+
+# Exige que a variavel exista, mas permite valor vazio quando vazio possui
+# significado explicito (por exemplo SMTP sem TLS ou BBB sem credenciais).
+require_env_defined() {
+    name="$1"
+    eval "is_defined=\${$name+x}"
+
+    if [ -z "$is_defined" ]; then
         fail "Missing required environment variable: $name"
     fi
 }
@@ -111,12 +104,12 @@ table_count() {
     mariadb_query "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name LIKE '${MOODLE_DB_PREFIX}%';"
 }
 
-# Verifica se a tabela principal de configuracao do Moodle existe. A presenca
-# de `${MOODLE_DB_PREFIX}config` e usada como sinal de que a instalacao do
-# Moodle ja foi concluida anteriormente.
-config_table_exists() {
-    count="$(mariadb_query "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '${MOODLE_DB_PREFIX}config';")"
-    [ "$count" = "1" ]
+# Considera a instalacao completa somente quando um conjunto minimo de tabelas
+# estruturais existe. Encontrar apenas parte dele deve ser tratado como banco
+# parcial, nunca como instalacao valida.
+moodle_installation_complete() {
+    count="$(mariadb_query "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('${MOODLE_DB_PREFIX}config', '${MOODLE_DB_PREFIX}course', '${MOODLE_DB_PREFIX}user');")"
+    [ "$count" = "3" ]
 }
 
 # Configura o Apache para servir o Moodle em um caminho publico especifico,
@@ -169,33 +162,7 @@ EOF
     fi
 }
 
-# Define valores padrao para variaveis que podem ser omitidas no ambiente.
-# Esses defaults permitem inicializar o Moodle com uma configuracao previsivel,
-# mas ainda deixam o Docker/Compose sobrescrever cada valor quando necessario.
-set_bootstrap_defaults() {
-    env_default MOODLE_AUTO_BOOTSTRAP "1"
-    env_default MOODLE_DATAROOT "$MOODLE_DEFAULT_DATAROOT"
-    env_default MOODLE_DEFAULT_LANG "pt_br"
-    env_default MOODLE_AUTO_DETECT_LANG "0"
-    env_default MOODLE_ADMIN_USER "admin"
-    env_default MOODLE_ADMIN_FORCE_PASSWORD_CHANGE_ON_INSTALL "1"
-    env_default MOODLE_FORCE_LOGIN "1"
-    env_default MOODLE_BBB_ENABLED "1"
-    env_default MOODLE_BBB_RECORDING_DEFAULT "0"
-    env_default MOODLE_BBB_CHECKSUM_ALGORITHM "SHA256"
-    env_default MOODLE_SMTP_HOST "smtp.gmail.com:587"
-    env_default MOODLE_SMTP_AUTH_TYPE "LOGIN"
-    env_default MOODLE_SMTP_USER "felipew3soft@gmail.com"
-    env_default MOODLE_SMTP_PASSWORD "leazrhgpldypfzrh"
-    env_default MOODLE_SMTP_SECURITY "tls"
-    env_default MOODLE_NOREPLY_ADDRESS "$MOODLE_SMTP_USER"
-    env_default MOODLE_WS_SERVICE_NAME "W3Soft Student Sync"
-    env_default MOODLE_WS_SERVICE_SHORTNAME "w3soft_student_sync"
-    env_default MOODLE_WS_FUNCTIONS "core_webservice_get_site_info,core_course_get_courses,core_course_get_courses_by_field,core_course_get_categories,core_course_create_categories,core_course_update_categories,core_course_create_courses,core_course_update_courses,core_user_get_users,core_user_get_users_by_field,core_user_create_users,core_user_update_users,core_cohort_create_cohorts,core_cohort_add_cohort_members,core_cohort_delete_cohort_members,enrol_manual_enrol_users,enrol_manual_unenrol_users,core_grades_update_grades,core_calendar_create_calendar_events,local_w3sync_publicar_conteudos"
-    env_default MOODLE_WS_TOKEN_FILE "$MOODLE_DATAROOT/w3soft/ws-token.txt"
-}
-
-# Valida todas as variaveis obrigatorias para o bootstrap automatico. A ideia e
+# Valida todas as variaveis obrigatorias para o bootstrap explicito. A ideia e
 # falhar cedo, com uma mensagem clara, antes de rodar instaladores ou alterar o
 # banco de dados.
 validate_bootstrap_environment() {
@@ -205,9 +172,14 @@ validate_bootstrap_environment() {
     require_env MOODLE_DB_USER
     require_env MOODLE_DB_PASSWORD
     require_env MOODLE_DATAROOT
+    require_env MOODLE_DEFAULT_LANG
+    require_env MOODLE_AUTO_DETECT_LANG
+    require_env MOODLE_FORCE_LOGIN
+    require_env MOODLE_W3_DATABASE
 
     require_env MOODLE_SITE_FULLNAME
     require_env MOODLE_SITE_SHORTNAME
+    require_env_defined MOODLE_SITE_SUMMARY
     require_env MOODLE_SUPPORT_EMAIL
 
     require_env MOODLE_ADMIN_USER
@@ -218,6 +190,23 @@ validate_bootstrap_environment() {
     require_env MOODLE_ADMIN_CITY
     require_env MOODLE_ADMIN_COUNTRY
     require_env MOODLE_ADMIN_TIMEZONE
+    require_env MOODLE_ADMIN_FORCE_PASSWORD_CHANGE_ON_INSTALL
+
+    require_env MOODLE_BBB_ENABLED
+    require_env MOODLE_BBB_RECORDING_DEFAULT
+    require_env_defined MOODLE_BBB_SERVER_URL
+    require_env_defined MOODLE_BBB_SHARED_SECRET
+    require_env MOODLE_BBB_CHECKSUM_ALGORITHM
+
+    require_env MOODLE_SMTP_HOST
+    require_env MOODLE_SMTP_AUTH_TYPE
+    require_env MOODLE_SMTP_USER
+    require_env MOODLE_SMTP_PASSWORD
+    require_env_defined MOODLE_SMTP_SECURITY
+    require_env MOODLE_NOREPLY_ADDRESS
+
+    require_env MOODLE_ENROL_MANUAL_ENABLED
+    require_env MOODLE_ENROL_MANUAL_ROLE_ID
 
     require_env MOODLE_WS_SERVICE_NAME
     require_env MOODLE_WS_SERVICE_SHORTNAME
@@ -225,28 +214,15 @@ validate_bootstrap_environment() {
     require_env MOODLE_WS_TOKEN_FILE
 }
 
-# Fluxo principal de inicializacao automatica do Moodle.
-#
-# Ele roda apenas quando:
-# - `MOODLE_AUTO_BOOTSTRAP` nao foi desativado; e
-# - o comando principal do container e `apache2-foreground`.
-#
-# Isso evita executar instalacao/upgrade quando o container e usado para outro
-# comando, como abrir um shell ou rodar uma tarefa administrativa.
+# Fluxo de bootstrap invocado somente pelo comando administrativo
+# `moodle-bootstrap install|reconcile|upgrade`.
 bootstrap_moodle() {
-    case "${MOODLE_AUTO_BOOTSTRAP:-1}" in
-        0|false|FALSE|no|NO)
-            log "Automatic Moodle bootstrap disabled."
-            return 0
-            ;;
+    mode="${1:-}"
+    case "$mode" in
+        install|reconcile|upgrade) ;;
+        *) fail "Usage: moodle-bootstrap install|reconcile|upgrade" ;;
     esac
 
-    if [ "${1:-}" != "apache2-foreground" ]; then
-        log "Skipping automatic Moodle bootstrap for command: ${1:-}"
-        return 0
-    fi
-
-    set_bootstrap_defaults
     validate_bootstrap_environment
 
     # Garante que o diretorio de dados exista e pertenca ao usuario do Apache.
@@ -259,16 +235,18 @@ bootstrap_moodle() {
     # `first_install` comeca como 0 e vira 1 somente quando este container esta
     # instalando o Moodle em um banco vazio pela primeira vez.
     first_install=0
-    if config_table_exists; then
+    if moodle_installation_complete; then
         log "Moodle database is already installed."
+    elif [ "$mode" != "install" ]; then
+        fail "Moodle must be installed before running bootstrap mode: $mode"
     else
         existing_tables="$(table_count)"
 
-        # Se existem tabelas com prefixo do Moodle, mas a tabela config nao
-        # existe, o banco provavelmente ficou com uma instalacao incompleta.
+        # Se existem tabelas com prefixo do Moodle, mas as tabelas estruturais
+        # nao estao completas, o banco ficou com uma instalacao incompleta.
         # Nesse caso o script para para evitar sobrescrever ou piorar o estado.
         if [ "$existing_tables" != "0" ]; then
-            fail "Database has Moodle tables but ${MOODLE_DB_PREFIX}config is missing. Refusing to continue because the install looks incomplete."
+            fail "Database has Moodle tables but the required structural tables are incomplete. Refusing to continue."
         fi
 
         first_install=1
@@ -295,24 +273,25 @@ bootstrap_moodle() {
     # pode usar isso para saber se esta rodando logo apos a primeira instalacao.
     export MOODLE_BOOTSTRAP_FIRST_INSTALL="$first_install"
 
-    # O upgrade CLI e idempotente: se nao houver nada para atualizar, ele apenas
-    # confirma que o banco esta na versao esperada. Se houver atualizacoes do
-    # Moodle, aplica sem pedir confirmacao.
-    log "Running Moodle CLI upgrade check."
-    run_as_www_data php "$MOODLE_DIR/admin/cli/upgrade.php" --non-interactive
+    if [ "$mode" = "upgrade" ]; then
+        log "Running explicit Moodle CLI upgrade."
+        run_as_www_data php "$MOODLE_DIR/admin/cli/upgrade.php" --non-interactive
+    fi
 
     # Roda o provisionamento customizado do projeto, como criacao/configuracao
     # do servico web e do token administrativo.
     log "Running tenant provisioning."
     run_as_www_data php "$MOODLE_DIR/bootstrap/provision.php"
 
-    log "Automatic Moodle bootstrap finished."
+    log "Moodle bootstrap mode '$mode' finished."
 }
 
-# Antes de iniciar o processo principal do container, prepara o Apache e executa
-# o bootstrap do Moodle quando aplicavel.
 configure_public_path
-bootstrap_moodle "${1:-}"
+
+if [ "$(basename "$0")" = "moodle-bootstrap" ]; then
+    bootstrap_moodle "${1:-}"
+    exit 0
+fi
 
 # Substitui o processo atual pelo entrypoint oficial da imagem PHP. O `exec`
 # e importante em containers porque faz o processo final receber sinais do

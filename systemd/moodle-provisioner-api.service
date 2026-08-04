@@ -1,0 +1,26 @@
+[Unit]
+Description=Moodle Provisioner HTTP API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=moodle-provisioner-api
+Group=moodle-provisioner
+WorkingDirectory=/opt/moodle-provisioner
+Environment=ASPNETCORE_ENVIRONMENT=Production
+EnvironmentFile=-/etc/default/moodle-provisioner-api
+UMask=0007
+ExecStart=/usr/bin/dotnet /opt/moodle-provisioner/MoodleProvisioner.Api.dll
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=tmpfs
+BindPaths=/home/projetos/moodle-docker/.provisioner
+ReadWritePaths=/home/projetos/moodle-docker/.provisioner
+
+[Install]
+WantedBy=multi-user.target

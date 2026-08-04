@@ -46,7 +46,9 @@ cp proxy/Caddyfile.production.example proxy/Caddyfile.local
 
 O modelo preserva o prefixo `/moodle` ao encaminhar a requisicao. Nao use
 `handle_path`, pois o entrypoint da imagem configura o Apache para receber o
-caminho publico completo.
+caminho publico completo. O `Host` encaminhado ao container deve permanecer
+interno (`{upstream_hostport}`); o Moodle bloqueia o acesso quando recebe o
+mesmo host publico configurado em `MOODLE_URL` com `reverseproxy` habilitado.
 
 ## 3. Atualizar `MOODLE_URL` de cada instituicao
 

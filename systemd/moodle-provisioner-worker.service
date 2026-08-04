@@ -1,0 +1,26 @@
+[Unit]
+Description=Moodle institution provisioning worker
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=moodle-provisioner
+Group=moodle-provisioner
+SupplementaryGroups=docker
+WorkingDirectory=/opt/moodle-provisioner
+Environment=DOTNET_ENVIRONMENT=Production
+EnvironmentFile=-/etc/default/moodle-provisioner-worker
+UMask=0007
+ExecStart=/usr/bin/dotnet /opt/moodle-provisioner/MoodleProvisioner.Api.dll --worker
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/projetos/moodle-docker /home/projetos/moodle-docker/.provisioner
+
+[Install]
+WantedBy=multi-user.target

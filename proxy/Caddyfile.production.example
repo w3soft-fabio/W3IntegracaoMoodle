@@ -43,7 +43,7 @@
 
 	handle @tenantescolamodelo {
 		reverse_proxy moodle_escola_modelo:80 {
-			header_up Host {http.request.host}
+			header_up Host {upstream_hostport}
 			header_up X-Forwarded-Proto https
 			header_up X-Forwarded-Port 443
 		}
@@ -51,7 +51,7 @@
 
 	handle @tenantescolateste {
 		reverse_proxy moodle_escola_teste:80 {
-			header_up Host {http.request.host}
+			header_up Host {upstream_hostport}
 			header_up X-Forwarded-Proto https
 			header_up X-Forwarded-Port 443
 		}
@@ -59,7 +59,7 @@
 
 	handle @tenantcolegioquinzedenovembro {
 		reverse_proxy moodle_colegio_quinze_de_novembro:80 {
-			header_up Host {http.request.host}
+			header_up Host {upstream_hostport}
 			header_up X-Forwarded-Proto https
 			header_up X-Forwarded-Port 443
 		}
@@ -67,7 +67,7 @@
 
 	handle @tenantcolegiomonsenhoradelmardamotavalenca {
 		reverse_proxy moodle_colegio_monsenhor_adelmar_da_mota_valenca:80 {
-			header_up Host {http.request.host}
+			header_up Host {upstream_hostport}
 			header_up X-Forwarded-Proto https
 			header_up X-Forwarded-Port 443
 		}
@@ -75,7 +75,7 @@
 
 	handle @tenantcolegiomodelo {
 		reverse_proxy moodle_colegio_modelo:80 {
-			header_up Host {http.request.host}
+			header_up Host {upstream_hostport}
 			header_up X-Forwarded-Proto https
 			header_up X-Forwarded-Port 443
 		}
@@ -83,7 +83,7 @@
 
 	handle @tenantcolegiopresbiterianoquinzedenovembro {
 		reverse_proxy moodle_colegio_presbiteriano_quinze_de_novembro:80 {
-			header_up Host {http.request.host}
+			header_up Host {upstream_hostport}
 			header_up X-Forwarded-Proto https
 			header_up X-Forwarded-Port 443
 		}
@@ -91,7 +91,7 @@
 
 	handle @tenantcolegioreal {
 		reverse_proxy moodle_colegio_real:80 {
-			header_up Host {http.request.host}
+			header_up Host {upstream_hostport}
 			header_up X-Forwarded-Proto https
 			header_up X-Forwarded-Port 443
 		}
@@ -99,7 +99,7 @@
 
 	handle @tenantcolegiotiradentescpm {
 		reverse_proxy moodle_colegio_tiradentes_cpm:80 {
-			header_up Host {http.request.host}
+			header_up Host {upstream_hostport}
 			header_up X-Forwarded-Proto https
 			header_up X-Forwarded-Port 443
 		}
@@ -107,11 +107,14 @@
 
 	handle @tenantcolegiobatistacaruaru {
 		reverse_proxy moodle_colegio_batista_caruaru:80 {
-			header_up Host {http.request.host}
+			header_up Host {upstream_hostport}
 			header_up X-Forwarded-Proto https
 			header_up X-Forwarded-Port 443
 		}
 	}
+
+	# Rotas de novas instituicoes sao geradas isoladamente pelo worker.
+	import /etc/caddy/tenants/*.caddy
 
 	handle {
 		root * /srv

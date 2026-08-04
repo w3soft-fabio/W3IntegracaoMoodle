@@ -207,10 +207,10 @@ Configuracao SMTP padrao:
 ```dotenv
 MOODLE_SMTP_HOST=smtp.gmail.com:587
 MOODLE_SMTP_AUTH_TYPE=LOGIN
-MOODLE_SMTP_USER=felipew3soft@gmail.com
+MOODLE_SMTP_USER=smtp@example.com
 MOODLE_SMTP_PASSWORD=defina-a-senha-do-aplicativo
 MOODLE_SMTP_SECURITY=tls
-MOODLE_NOREPLY_ADDRESS=felipew3soft@gmail.com
+MOODLE_NOREPLY_ADDRESS=no-reply@example.com
 ```
 
 O bootstrap persiste esses valores nas configuracoes `smtphosts`,

@@ -1,0 +1,123 @@
+:80 {
+	@home path /moodle/
+	@index path /moodle/index.html
+	@unauthorizedPage path /moodle/401.html
+	@tenantescolamodelo path /moodle/escola-modelo/*
+	@tenantescolateste path /moodle/escola-teste/*
+	@tenantcolegioquinzedenovembro path /moodle/colegio-15-de-novembro/*
+	@tenantcolegiomonsenhoradelmardamotavalenca path /moodle/colegio-monsenhor-adelmar-da-mota-valenca/*
+	@tenantcolegiomodelo path /moodle/colegio-modelo/*
+	@tenantcolegiopresbiterianoquinzedenovembro path /moodle/colegio-presbiteriano-quinze-de-novembro/*
+	@tenantcolegioreal path /moodle/colegio-real/*
+	@tenantcolegiotiradentescpm path /moodle/colegio-tiradentes-cpm/*
+	@tenantcolegiobatistacaruaru path /moodle/colegio-batista-caruaru/*
+
+	redir /moodle /moodle/
+	redir /moodle/escola-modelo /moodle/escola-modelo/
+	redir /moodle/escola-teste /moodle/escola-teste/
+	redir /moodle/colegio-15-de-novembro /moodle/colegio-15-de-novembro/
+	redir /moodle/colegio-monsenhor-adelmar-da-mota-valenca /moodle/colegio-monsenhor-adelmar-da-mota-valenca/
+	redir /moodle/colegio-modelo /moodle/colegio-modelo/
+	redir /moodle/colegio-presbiteriano-quinze-de-novembro /moodle/colegio-presbiteriano-quinze-de-novembro/
+	redir /moodle/colegio-real /moodle/colegio-real/
+	redir /moodle/colegio-tiradentes-cpm /moodle/colegio-tiradentes-cpm/
+	redir /moodle/colegio-batista-caruaru /moodle/colegio-batista-caruaru/
+
+	handle @home {
+		root * /srv
+		rewrite * /index.html
+		file_server
+	}
+
+	handle @index {
+		root * /srv
+		rewrite * /index.html
+		file_server
+	}
+
+	handle @unauthorizedPage {
+		root * /srv
+		rewrite * /401.html
+		file_server
+	}
+
+	handle @tenantescolamodelo {
+		reverse_proxy moodle_escola_modelo:80 {
+			header_up Host {http.request.host}
+			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-Port 443
+		}
+	}
+
+	handle @tenantescolateste {
+		reverse_proxy moodle_escola_teste:80 {
+			header_up Host {http.request.host}
+			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-Port 443
+		}
+	}
+
+	handle @tenantcolegioquinzedenovembro {
+		reverse_proxy moodle_colegio_quinze_de_novembro:80 {
+			header_up Host {http.request.host}
+			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-Port 443
+		}
+	}
+
+	handle @tenantcolegiomonsenhoradelmardamotavalenca {
+		reverse_proxy moodle_colegio_monsenhor_adelmar_da_mota_valenca:80 {
+			header_up Host {http.request.host}
+			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-Port 443
+		}
+	}
+
+	handle @tenantcolegiomodelo {
+		reverse_proxy moodle_colegio_modelo:80 {
+			header_up Host {http.request.host}
+			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-Port 443
+		}
+	}
+
+	handle @tenantcolegiopresbiterianoquinzedenovembro {
+		reverse_proxy moodle_colegio_presbiteriano_quinze_de_novembro:80 {
+			header_up Host {http.request.host}
+			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-Port 443
+		}
+	}
+
+	handle @tenantcolegioreal {
+		reverse_proxy moodle_colegio_real:80 {
+			header_up Host {http.request.host}
+			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-Port 443
+		}
+	}
+
+	handle @tenantcolegiotiradentescpm {
+		reverse_proxy moodle_colegio_tiradentes_cpm:80 {
+			header_up Host {http.request.host}
+			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-Port 443
+		}
+	}
+
+	handle @tenantcolegiobatistacaruaru {
+		reverse_proxy moodle_colegio_batista_caruaru:80 {
+			header_up Host {http.request.host}
+			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-Port 443
+		}
+	}
+
+	handle {
+		root * /srv
+		rewrite * /401.html
+		file_server {
+			status 401
+		}
+	}
+}

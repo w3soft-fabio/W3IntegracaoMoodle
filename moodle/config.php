@@ -41,6 +41,12 @@ $CFG->dboptions = [
 
 $CFG->wwwroot   = moodle_env_required('MOODLE_URL');
 $CFG->reverseproxy = true;
+$publicUrlScheme = parse_url($CFG->wwwroot, PHP_URL_SCHEME);
+$sslProxyDefault = $publicUrlScheme === 'https' ? 'true' : 'false';
+$CFG->sslproxy = filter_var(
+    moodle_env_optional('MOODLE_SSL_PROXY', $sslProxyDefault),
+    FILTER_VALIDATE_BOOLEAN
+);
 $CFG->dataroot  = moodle_env_optional('MOODLE_DATAROOT', '/var/www/moodledata');
 $CFG->admin     = 'admin';
 $CFG->lang      = moodle_env_optional('MOODLE_DEFAULT_LANG', 'pt_br');

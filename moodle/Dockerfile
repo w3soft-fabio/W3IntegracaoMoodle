@@ -37,6 +37,7 @@ RUN test -n "$MOODLE_REF" \
     && printf '%s\n' "$MOODLE_REF" | grep -Eq '^([0-9a-fA-F]{40}|refs/tags/[A-Za-z0-9][A-Za-z0-9._/-]*)$' \
     && rm -rf /var/www/html/* \
     && git init /var/www/html \
+    && git config --global --add safe.directory /var/www/html \
     && git -C /var/www/html remote add origin https://github.com/moodle/moodle.git \
     && git -C /var/www/html fetch --depth 1 origin "$MOODLE_REF" \
     && git -C /var/www/html checkout --detach FETCH_HEAD \

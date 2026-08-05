@@ -14,8 +14,14 @@ secrets/*.env
 .env.*
 !.env.example
 !.env.*.example
-.provisioner/tenants
 .provisioner/current-image
+generated/instituicoes/*
+!generated/instituicoes/.gitkeep
+
+# Dados locais de fluxos removidos; não são consumidos pelo provisionador atual
+.provisioner/tenants/
+docker-compose.instituicoes.yml
+proxy/Caddyfile.local
 
 # Moodle
 /moodledata/
@@ -25,11 +31,9 @@ secrets/*.env
 /sessions/
 /temp/
 /trashdir/
-proxy/Caddyfile.local
 proxy/tenants/*.caddy
 
 # Docker e banco de dados locais
-docker-compose.instituicoes.yml
 db_data/
 mysql/
 mariadb/

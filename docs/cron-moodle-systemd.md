@@ -66,16 +66,11 @@ labels:
 ```
 
 Proxy, banco, Redis e outros servicos auxiliares nao devem receber esse label.
-O arquivo `docker-compose.instituicoes.yml` deste projeto ja aplica o label ao
-tenant modelo.
+O worker inclui o label em todo Compose isolado que gera. Não existe cadastro
+manual de containers para o scheduler.
 
-Depois de atualizar o projeto no servidor, recrie os containers das
-instituicoes para aplicar o label:
-
-```sh
-cd /opt/moodle-docker
-docker compose -f docker-compose.instituicoes.yml up -d
-```
+Para uma instituição criada pelo provisionador, o arquivo pode ser conferido em
+`generated/instituicoes/{slug}/docker-compose.yml`.
 
 Confirme o label:
 

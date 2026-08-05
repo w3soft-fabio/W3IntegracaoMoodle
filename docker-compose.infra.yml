@@ -45,7 +45,7 @@ services:
       - "127.0.0.1:8088:80"
       - "127.0.0.1:8443:443"
     volumes:
-      - ./proxy/Caddyfile.local:/etc/caddy/Caddyfile:ro
+      - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./proxy/tenants:/etc/caddy/tenants:ro
       - ./proxy/site:/srv:ro
       - moodle_caddy_data:/data

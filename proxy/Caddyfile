@@ -1,0 +1,28 @@
+:80 {
+	@home path /moodle/ /moodle/index.html
+	@unauthorizedPage path /moodle/401.html
+
+	redir /moodle /moodle/
+
+	handle @home {
+		root * /srv
+		rewrite * /index.html
+		file_server
+	}
+
+	handle @unauthorizedPage {
+		root * /srv
+		rewrite * /401.html
+		file_server
+	}
+
+	import /etc/caddy/tenants/*.caddy
+
+	handle {
+		root * /srv
+		rewrite * /401.html
+		file_server {
+			status 401
+		}
+	}
+}
